@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Platform, Linking, Alert } from 'react-native';
-import ScreenTimeModule from '@/modules/screen-time/ScreenTimeModule';
+import ScreenTimeModule from '@/modules/screen-time';
 
 export interface PermissionStatus {
   screenTime: 'granted' | 'denied' | 'not-determined' | 'checking';

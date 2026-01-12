@@ -5,8 +5,10 @@ import SwiftUI
 import React
 
 // Store the selection globally for use in blocking
-// Note: We'll store it directly from the picker callback
-var globalActivitySelection: FamilyActivitySelection?
+// Note: This is shared with ScreenTimeModule and DeviceActivityMonitor
+// Must be public to be accessible from the main app (DeviceActivityMonitor)
+// For Expo Modules API, both modules will be compiled into the same Xcode project
+public var globalActivitySelection: FamilyActivitySelection?
 
 // Storage key for saved selections
 private let SAVED_SELECTION_KEY = "SavedFamilyActivitySelection"
@@ -19,17 +21,22 @@ private let SAVED_SELECTION_KEY = "SavedFamilyActivitySelection"
 // 3. Using ManagedSettingsStore to persist blocking settings (tokens are stored there automatically)
 // 4. Restoring from globalActivitySelection when available
 // Note: This class is used by both ScreenTimeModule and DeviceActivityMonitor
-internal class FamilyActivitySelectionStorage {
-  static let shared = FamilyActivitySelectionStorage()
+// Must be public to be accessible from the main app (DeviceActivityMonitor)
+// For Expo Modules API, both modules will be compiled into the same project,
+// so internal/public access will work correctly
+public class FamilyActivitySelectionStorage {
+  public static let shared = FamilyActivitySelectionStorage()
   private let userDefaults = UserDefaults.standard
   private var cachedSelections: [String: FamilyActivitySelection] = [:]
+  
+  public init() {}
   
   // Save selection for a specific schedule ID
   // Since ApplicationToken can't be serialized directly, we:
   // - Cache it in memory for current session
   // - Store a flag in UserDefaults indicating selection exists
   // - ManagedSettingsStore automatically persists tokens when blocking is active
-  func saveSelection(_ selection: FamilyActivitySelection, forScheduleId scheduleId: String) {
+  public func saveSelection(_ selection: FamilyActivitySelection, forScheduleId scheduleId: String) {
     // Cache in memory for current session
     cachedSelections[scheduleId] = selection
     
@@ -51,7 +58,7 @@ internal class FamilyActivitySelectionStorage {
   }
   
   // Load selection for a specific schedule ID
-  func loadSelection(forScheduleId scheduleId: String) -> FamilyActivitySelection? {
+  public func loadSelection(forScheduleId scheduleId: String) -> FamilyActivitySelection? {
     // First check memory cache (current session)
     if let cached = cachedSelections[scheduleId], !cached.applicationTokens.isEmpty {
       return cached
@@ -80,17 +87,17 @@ internal class FamilyActivitySelectionStorage {
   }
   
   // Save global selection (used when no specific schedule)
-  func saveGlobalSelection(_ selection: FamilyActivitySelection) {
+  public func saveGlobalSelection(_ selection: FamilyActivitySelection) {
     saveSelection(selection, forScheduleId: "global")
   }
   
   // Load global selection
-  func loadGlobalSelection() -> FamilyActivitySelection? {
+  public func loadGlobalSelection() -> FamilyActivitySelection? {
     return loadSelection(forScheduleId: "global")
   }
   
   // Restore selection to global variable (call this on app start)
-  func restoreSelectionForScheduleId(_ scheduleId: String) {
+  public func restoreSelectionForScheduleId(_ scheduleId: String) {
     if let selection = loadSelection(forScheduleId: scheduleId) {
       globalActivitySelection = selection
       print("Restored selection for schedule \(scheduleId) to global variable")

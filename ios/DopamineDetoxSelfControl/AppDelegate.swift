@@ -1,9 +1,6 @@
 import Expo
 import React
 import ReactAppDependencyProvider
-import FirebaseCore
-import Adapty
-import AppsFlyerLib
 
 @UIApplicationMain
 public class AppDelegate: ExpoAppDelegate {
@@ -16,13 +13,6 @@ public class AppDelegate: ExpoAppDelegate {
     _ application: UIApplication,
     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil
   ) -> Bool {
-    
-    FirebaseApp.configure()
-    #if DEBUG
-    AppsFlyerLib.shared().isDebug = true
-    #endif
-    
-    
     let delegate = ReactNativeDelegate()
     let factory = ExpoReactNativeFactory(delegate: delegate)
     delegate.dependencyProvider = RCTAppDependencyProvider()
@@ -48,9 +38,6 @@ public class AppDelegate: ExpoAppDelegate {
     open url: URL,
     options: [UIApplication.OpenURLOptionsKey: Any] = [:]
   ) -> Bool {
-    // Handle AppsFlyer deep linking
-    AppsFlyerLib.shared().handleOpen(url, sourceApplication: options[.sourceApplication] as? String)
-    
     return super.application(app, open: url, options: options) || RCTLinkingManager.application(app, open: url, options: options)
   }
 
@@ -60,12 +47,6 @@ public class AppDelegate: ExpoAppDelegate {
     continue userActivity: NSUserActivity,
     restorationHandler: @escaping ([UIUserActivityRestoring]?) -> Void
   ) -> Bool {
-    // Handle AppsFlyer universal links
-    if userActivity.activityType == NSUserActivityTypeBrowsingWeb, let url = userActivity.webpageURL {
-      // Use handleOpen for universal links instead of continue to avoid type ambiguity
-      AppsFlyerLib.shared().handleOpen(url, sourceApplication: nil)
-    }
-    
     let result = RCTLinkingManager.application(application, continue: userActivity, restorationHandler: restorationHandler)
     return super.application(application, continue: userActivity, restorationHandler: restorationHandler) || result
   }

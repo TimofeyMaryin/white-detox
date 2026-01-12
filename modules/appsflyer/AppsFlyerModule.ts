@@ -47,200 +47,122 @@ const { AppsFlyerLib: NativeAppsFlyerModule } = NativeModules;
 // Fallback implementation for development
 const fallbackAppsFlyerModule: AppsFlyerModuleInterface = {
   async initSdk() {
-    if (__DEV__) {
-      console.warn('AppsFlyerModule not available - using fallback');
-    }
+    // Silently fail - AppsFlyer may not be configured yet
   },
   async logEvent() {
-    if (__DEV__) {
-      console.warn('AppsFlyerModule not available - using fallback');
-    }
+    // Silently fail - AppsFlyer may not be configured yet
   },
   async setUserId() {
-    if (__DEV__) {
-      console.warn('AppsFlyerModule not available - using fallback');
-    }
+    // Silently fail - AppsFlyer may not be configured yet
   },
   async setUserEmails() {
-    if (__DEV__) {
-      console.warn('AppsFlyerModule not available - using fallback');
-    }
+    // Silently fail - AppsFlyer may not be configured yet
   },
   async setAdditionalData() {
-    if (__DEV__) {
-      console.warn('AppsFlyerModule not available - using fallback');
-    }
+    // Silently fail - AppsFlyer may not be configured yet
   },
   async setAppsFlyerDevKey() {
-    if (__DEV__) {
-      console.warn('AppsFlyerModule not available - using fallback');
-    }
+    // Silently fail - AppsFlyer may not be configured yet
   },
   async setAppleAppID() {
-    if (__DEV__) {
-      console.warn('AppsFlyerModule not available - using fallback');
-    }
+    // Silently fail - AppsFlyer may not be configured yet
   },
   async setCustomerUserId() {
-    if (__DEV__) {
-      console.warn('AppsFlyerModule not available - using fallback');
-    }
+    // Silently fail - AppsFlyer may not be configured yet
   },
   async setCurrencyCode() {
-    if (__DEV__) {
-      console.warn('AppsFlyerModule not available - using fallback');
-    }
+    // Silently fail - AppsFlyer may not be configured yet
   },
   async setOneLinkCustomDomain() {
-    if (__DEV__) {
-      console.warn('AppsFlyerModule not available - using fallback');
-    }
+    // Silently fail - AppsFlyer may not be configured yet
   },
   async setResolveDeepLinkURLs() {
-    if (__DEV__) {
-      console.warn('AppsFlyerModule not available - using fallback');
-    }
+    // Silently fail - AppsFlyer may not be configured yet
   },
   async setDisableCollectAppleAdSupport() {
-    if (__DEV__) {
-      console.warn('AppsFlyerModule not available - using fallback');
-    }
+    // Silently fail - AppsFlyer may not be configured yet
   },
   async setDisableCollectIAd() {
-    if (__DEV__) {
-      console.warn('AppsFlyerModule not available - using fallback');
-    }
+    // Silently fail - AppsFlyer may not be configured yet
   },
   async setDisableCollectASA() {
-    if (__DEV__) {
-      console.warn('AppsFlyerModule not available - using fallback');
-    }
+    // Silently fail - AppsFlyer may not be configured yet
   },
   async setUseReceiptValidationSandbox() {
-    if (__DEV__) {
-      console.warn('AppsFlyerModule not available - using fallback');
-    }
+    // Silently fail - AppsFlyer may not be configured yet
   },
   async setUseUninstallSandbox() {
-    if (__DEV__) {
-      console.warn('AppsFlyerModule not available - using fallback');
-    }
+    // Silently fail - AppsFlyer may not be configured yet
   },
   async setAnonymizeUser() {
-    if (__DEV__) {
-      console.warn('AppsFlyerModule not available - using fallback');
-    }
+    // Silently fail - AppsFlyer may not be configured yet
   },
   async setCollectIMEI() {
-    if (__DEV__) {
-      console.warn('AppsFlyerModule not available - using fallback');
-    }
+    // Silently fail - AppsFlyer may not be configured yet
   },
   async setCollectAndroidID() {
-    if (__DEV__) {
-      console.warn('AppsFlyerModule not available - using fallback');
-    }
+    // Silently fail - AppsFlyer may not be configured yet
   },
   async setCollectOaid() {
-    if (__DEV__) {
-      console.warn('AppsFlyerModule not available - using fallback');
-    }
+    // Silently fail - AppsFlyer may not be configured yet
   },
   async waitForATTUserAuthorization() {
-    if (__DEV__) {
-      console.warn('AppsFlyerModule not available - using fallback');
-    }
+    // Silently fail - AppsFlyer may not be configured yet
   },
   async stop() {
-    if (__DEV__) {
-      console.warn('AppsFlyerModule not available - using fallback');
-    }
+    // Silently fail - AppsFlyer may not be configured yet
   },
   async start() {
-    if (__DEV__) {
-      console.warn('AppsFlyerModule not available - using fallback');
-    }
+    // Silently fail - AppsFlyer may not be configured yet
   },
   async setSharingFilter() {
-    if (__DEV__) {
-      console.warn('AppsFlyerModule not available - using fallback');
-    }
+    // Silently fail - AppsFlyer may not be configured yet
   },
   async setSharingFilterForAllPartners() {
-    if (__DEV__) {
-      console.warn('AppsFlyerModule not available - using fallback');
-    }
+    // Silently fail - AppsFlyer may not be configured yet
   },
   async setPartnerData() {
-    if (__DEV__) {
-      console.warn('AppsFlyerModule not available - using fallback');
-    }
+    // Silently fail - AppsFlyer may not be configured yet
   },
   async generateInviteLink() {
-    if (__DEV__) {
-      console.warn('AppsFlyerModule not available - using fallback');
-    }
+    // Silently fail - AppsFlyer may not be configured yet
     return '';
   },
   async validateAndLogInAppPurchase() {
-    if (__DEV__) {
-      console.warn('AppsFlyerModule not available - using fallback');
-    }
+    // Silently fail - AppsFlyer may not be configured yet
   },
   async logCrossPromotionImpression() {
-    if (__DEV__) {
-      console.warn('AppsFlyerModule not available - using fallback');
-    }
+    // Silently fail - AppsFlyer may not be configured yet
   },
   async logCrossPromotionAndOpenStore() {
-    if (__DEV__) {
-      console.warn('AppsFlyerModule not available - using fallback');
-    }
+    // Silently fail - AppsFlyer may not be configured yet
   },
   async setHost() {
-    if (__DEV__) {
-      console.warn('AppsFlyerModule not available - using fallback');
-    }
+    // Silently fail - AppsFlyer may not be configured yet
   },
   async setMinTimeBetweenSessions() {
-    if (__DEV__) {
-      console.warn('AppsFlyerModule not available - using fallback');
-    }
+    // Silently fail - AppsFlyer may not be configured yet
   },
   async setPhoneNumber() {
-    if (__DEV__) {
-      console.warn('AppsFlyerModule not available - using fallback');
-    }
+    // Silently fail - AppsFlyer may not be configured yet
   },
   async setConsentData() {
-    if (__DEV__) {
-      console.warn('AppsFlyerModule not available - using fallback');
-    }
+    // Silently fail - AppsFlyer may not be configured yet
   },
   async setConsent() {
-    if (__DEV__) {
-      console.warn('AppsFlyerModule not available - using fallback');
-    }
+    // Silently fail - AppsFlyer may not be configured yet
   },
   async anonymizeUser() {
-    if (__DEV__) {
-      console.warn('AppsFlyerModule not available - using fallback');
-    }
+    // Silently fail - AppsFlyer may not be configured yet
   },
   async setDisableNetworkData() {
-    if (__DEV__) {
-      console.warn('AppsFlyerModule not available - using fallback');
-    }
+    // Silently fail - AppsFlyer may not be configured yet
   },
   async setOnDeepLinking() {
-    if (__DEV__) {
-      console.warn('AppsFlyerModule not available - using fallback');
-    }
+    // Silently fail - AppsFlyer may not be configured yet
   },
   async setOnConversionData() {
-    if (__DEV__) {
-      console.warn('AppsFlyerModule not available - using fallback');
-    }
+    // Silently fail - AppsFlyer may not be configured yet
   },
 };
 

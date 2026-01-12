@@ -70,12 +70,5 @@
     <string>Automatic</string>
     <key>UIViewControllerBasedStatusBarAppearance</key>
     <false/>
-    <key>NSDeviceActivityMonitorExtension</key>
-    <dict>
-      <key>NSExtensionPointIdentifier</key>
-      <string>com.apple.device-activity-monitor</string>
-      <key>NSExtensionPrincipalClass</key>
-      <string>$(PRODUCT_MODULE_NAME).BlockingActivityMonitor</string>
-    </dict>
   </dict>
 </plist>

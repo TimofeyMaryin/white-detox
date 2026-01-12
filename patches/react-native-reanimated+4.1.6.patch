@@ -1,0 +1,140 @@
+diff --git a/node_modules/react-native-reanimated/Common/cpp/reanimated/Fabric/ReanimatedMountHook.cpp b/node_modules/react-native-reanimated/Common/cpp/reanimated/Fabric/ReanimatedMountHook.cpp
+index 122d5a2..9eeb7fe 100644
+--- a/node_modules/react-native-reanimated/Common/cpp/reanimated/Fabric/ReanimatedMountHook.cpp
++++ b/node_modules/react-native-reanimated/Common/cpp/reanimated/Fabric/ReanimatedMountHook.cpp
+@@ -20,11 +20,7 @@ ReanimatedMountHook::~ReanimatedMountHook() noexcept {
+ 
+ void ReanimatedMountHook::shadowTreeDidMount(
+     const RootShadowNode::Shared &rootShadowNode,
+-#if REACT_NATIVE_MINOR_VERSION >= 81
+-    HighResTimeStamp
+-#else
+-    double
+-#endif // REACT_NATIVE_MINOR_VERSION >= 81
++    HighResTimeStamp /*mountTime*/
+     ) noexcept {
+   ReanimatedSystraceSection s("ReanimatedMountHook::shadowTreeDidMount");
+ 
+diff --git a/node_modules/react-native-reanimated/Common/cpp/reanimated/Fabric/ReanimatedMountHook.h b/node_modules/react-native-reanimated/Common/cpp/reanimated/Fabric/ReanimatedMountHook.h
+index ea077dd..d8287d1 100644
+--- a/node_modules/react-native-reanimated/Common/cpp/reanimated/Fabric/ReanimatedMountHook.h
++++ b/node_modules/react-native-reanimated/Common/cpp/reanimated/Fabric/ReanimatedMountHook.h
+@@ -21,11 +21,7 @@ class ReanimatedMountHook : public UIManagerMountHook {
+ 
+   void shadowTreeDidMount(
+       RootShadowNode::Shared const &rootShadowNode,
+-#if REACT_NATIVE_MINOR_VERSION >= 81
+-      HighResTimeStamp /*unmountTime*/
+-#else
+-      double /*unmountTime*/
+-#endif // REACT_NATIVE_MINOR_VERSION >= 81
++      HighResTimeStamp /*mountTime*/
+       ) noexcept override;
+ 
+  private:
+diff --git a/node_modules/react-native-reanimated/Common/cpp/reanimated/Fabric/updates/AnimatedPropsRegistry.cpp b/node_modules/react-native-reanimated/Common/cpp/reanimated/Fabric/updates/AnimatedPropsRegistry.cpp
+index 8af8cd8..5e9fc3f 100644
+--- a/node_modules/react-native-reanimated/Common/cpp/reanimated/Fabric/updates/AnimatedPropsRegistry.cpp
++++ b/node_modules/react-native-reanimated/Common/cpp/reanimated/Fabric/updates/AnimatedPropsRegistry.cpp
+@@ -1,17 +1,17 @@
+ #include <reanimated/Fabric/updates/AnimatedPropsRegistry.h>
+ 
++#include <react/renderer/bridging/bridging.h>
++
+ #include <utility>
+ 
+ namespace reanimated {
+ 
+-#if REACT_NATIVE_MINOR_VERSION >= 81
+ static inline std::shared_ptr<const ShadowNode> shadowNodeFromValue(
+     jsi::Runtime &rt,
+     const jsi::Value &shadowNodeWrapper) {
+   return Bridging<std::shared_ptr<const ShadowNode>>::fromJs(
+       rt, shadowNodeWrapper);
+ }
+-#endif
+ 
+ void AnimatedPropsRegistry::update(
+     jsi::Runtime &rt,
+diff --git a/node_modules/react-native-reanimated/Common/cpp/reanimated/NativeModules/ReanimatedModuleProxy.cpp b/node_modules/react-native-reanimated/Common/cpp/reanimated/NativeModules/ReanimatedModuleProxy.cpp
+index 05acd4f..d213e67 100644
+--- a/node_modules/react-native-reanimated/Common/cpp/reanimated/NativeModules/ReanimatedModuleProxy.cpp
++++ b/node_modules/react-native-reanimated/Common/cpp/reanimated/NativeModules/ReanimatedModuleProxy.cpp
+@@ -13,6 +13,7 @@
+ #include <fbjni/fbjni.h>
+ #endif // __ANDROID__
+ 
++#include <react/renderer/bridging/bridging.h>
+ #include <react/renderer/scheduler/Scheduler.h>
+ #include <react/renderer/uimanager/UIManagerBinding.h>
+ 
+@@ -26,14 +27,12 @@
+ 
+ namespace reanimated {
+ 
+-#if REACT_NATIVE_MINOR_VERSION >= 81
+ static inline std::shared_ptr<const ShadowNode> shadowNodeFromValue(
+     jsi::Runtime &rt,
+     const jsi::Value &shadowNodeWrapper) {
+   return Bridging<std::shared_ptr<const ShadowNode>>::fromJs(
+       rt, shadowNodeWrapper);
+ }
+-#endif
+ 
+ ReanimatedModuleProxy::ReanimatedModuleProxy(
+     const std::shared_ptr<WorkletsModuleProxy> &workletsModuleProxy,
+diff --git a/node_modules/react-native-reanimated/Common/cpp/reanimated/Tools/ReanimatedVersion.cpp b/node_modules/react-native-reanimated/Common/cpp/reanimated/Tools/ReanimatedVersion.cpp
+index 230b23b..128ce95 100644
+--- a/node_modules/react-native-reanimated/Common/cpp/reanimated/Tools/ReanimatedVersion.cpp
++++ b/node_modules/react-native-reanimated/Common/cpp/reanimated/Tools/ReanimatedVersion.cpp
+@@ -9,6 +9,8 @@
+ #define STRINGIZE(x) #x
+ #define STRINGIZE2(x) STRINGIZE(x)
+ #define REANIMATED_VERSION_STRING STRINGIZE2(REANIMATED_VERSION)
++#else
++#define REANIMATED_VERSION_STRING "unknown"
+ #endif // REANIMATED_VERSION
+ 
+ using namespace facebook;
+diff --git a/node_modules/react-native-reanimated/RNReanimated.podspec b/node_modules/react-native-reanimated/RNReanimated.podspec
+index dba0fad..80a28e2 100644
+--- a/node_modules/react-native-reanimated/RNReanimated.podspec
++++ b/node_modules/react-native-reanimated/RNReanimated.podspec
+@@ -85,6 +85,7 @@ Pod::Spec.new do |s|
+       "\"$(PODS_ROOT)/#{$config[:dynamic_frameworks_worklets_dir]}/Common/cpp\"",
+     ].join(' '),
+     "OTHER_CFLAGS" => "$(inherited) #{example_flag} #{version_flags} #{compilation_metadata_generation_flag} #{feature_flags}",
++    "OTHER_CPLUSPLUSFLAGS" => "$(inherited) #{example_flag} #{version_flags} #{compilation_metadata_generation_flag} #{feature_flags}",
+   }
+   s.requires_arc = true
+ 
+diff --git a/node_modules/react-native-reanimated/lib/module/ReanimatedModule/NativeReanimated.js b/node_modules/react-native-reanimated/lib/module/ReanimatedModule/NativeReanimated.js
+index c17f576..b137bf5 100644
+--- a/node_modules/react-native-reanimated/lib/module/ReanimatedModule/NativeReanimated.js
++++ b/node_modules/react-native-reanimated/lib/module/ReanimatedModule/NativeReanimated.js
+@@ -51,7 +51,24 @@ See https://docs.swmansion.com/react-native-reanimated/docs/guides/troubleshooti
+       throw new ReanimatedError('Reanimated 4 supports only the React Native New Architecture and web.');
+     }
+     if (__DEV__) {
+-      checkCppVersion();
++      // Defer version check to ensure injectReanimatedCppVersion has been called
++      // This fixes the issue where checkCppVersion is called before the native module
++      // has injected the version via injectReanimatedCppVersion in RNRuntimeDecorator::decorate
++      // Use a longer delay and retry mechanism to ensure version is available
++      let retries = 0;
++      const maxRetries = 10;
++      const checkVersion = () => {
++        const cppVersion = global._REANIMATED_VERSION_CPP;
++        if (cppVersion === undefined || cppVersion === 'unknown') {
++          if (retries < maxRetries) {
++            retries++;
++            setTimeout(checkVersion, 50);
++            return;
++          }
++        }
++        checkCppVersion();
++      };
++      setTimeout(checkVersion, 100);
+     }
+     this.#reanimatedModuleProxy = global.__reanimatedModuleProxy;
+     executeOnUIRuntimeSync(function initializeUI() {

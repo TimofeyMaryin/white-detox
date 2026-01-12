@@ -5,7 +5,7 @@ import { TopBar } from '@/components/top-bar';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { Colors } from '@/constants/theme';
 import { useBlocker } from '@/hooks/use-blocker';
-import ScreenTimeModule from '@/modules/screen-time/ScreenTimeModule';
+import ScreenTimeModule from '@/modules/screen-time';
 import adaptyService from '@/services/adapty-service';
 import { router } from 'expo-router';
 import React, { useEffect, useState } from 'react';
@@ -181,8 +181,6 @@ export default function HomeScreen() {
             }
             stopBlocking();
             
-            // Show grayscale option after stopping
-            // Only if apps are still in the schedule (not removed)
             if (hasActiveApps) {
               setTimeout(() => {
                 Alert.alert(
@@ -265,22 +263,6 @@ export default function HomeScreen() {
 
         {/* Time Dial */}
         <TimeDial savedTime={state.savedTime} />
-
-        {/* Grayscale Mode Option - Always visible */}
-        <View style={styles.grayscaleContainer}>
-          <View style={styles.grayscaleRow}>
-            <ThemedText style={styles.grayscaleLabel}>Grayscale Mode</ThemedText>
-            <Switch
-              value={state.grayscaleMode}
-              onValueChange={toggleGrayscale}
-              trackColor={{ false: '#767577', true: Colors.dark.primary }}
-              thumbColor={state.grayscaleMode ? '#fff' : '#f4f3f4'}
-            />
-          </View>
-          <ThemedText style={styles.grayscaleDescription}>
-            Enable grayscale mode to make blocked apps appear in black and white
-          </ThemedText>
-        </View>
 
         {/* Control Buttons */}
         <View style={styles.controls}>
@@ -523,29 +505,5 @@ const styles = StyleSheet.create({
     fontStyle: 'italic',
     textAlign: 'center',
     marginTop: 20,
-  },
-  grayscaleContainer: {
-    marginTop: 20,
-    marginBottom: 20,
-    padding: 16,
-    backgroundColor: '#1a1a1a',
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: Colors.dark.primary,
-  },
-  grayscaleRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  grayscaleLabel: {
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  grayscaleDescription: {
-    fontSize: 14,
-    opacity: 0.7,
-    marginTop: 4,
   },
 });

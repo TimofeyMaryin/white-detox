@@ -2,8 +2,8 @@ import { useState, useEffect, useCallback } from 'react';
 import { AppState } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { BlockerState, BlockerSchedule } from '@/types/blocker';
-import GrayscaleModule from '@/modules/grayscale/GrayscaleModule';
-import ScreenTimeModule from '@/modules/screen-time/ScreenTimeModule';
+import GrayscaleModule from '@/modules/grayscale';
+import ScreenTimeModule from '@/modules/screen-time';
 
 const BLOCKER_STATE_KEY = '@blocker_state';
 const BLOCKER_SCHEDULES_KEY = '@blocker_schedules';

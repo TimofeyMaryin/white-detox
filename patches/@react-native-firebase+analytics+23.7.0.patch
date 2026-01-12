@@ -1,0 +1,39 @@
+diff --git a/node_modules/@react-native-firebase/analytics/RNFBAnalytics.podspec b/node_modules/@react-native-firebase/analytics/RNFBAnalytics.podspec
+index 1ae016f..5db2377 100644
+--- a/node_modules/@react-native-firebase/analytics/RNFBAnalytics.podspec
++++ b/node_modules/@react-native-firebase/analytics/RNFBAnalytics.podspec
+@@ -29,6 +29,15 @@ Pod::Spec.new do |s|
+   s.tvos.deployment_target = firebase_tvos_target
+   s.source_files        = 'ios/**/*.{h,m}'
+ 
++  # CRITICAL: Configure header search paths to find RNFBApp headers
++  # This is needed when using use_frameworks! :linkage => :static
++  # as RNFBApp headers must be available during RNFBAnalytics compilation
++  # IMPORTANT: Use $(inherited) FIRST to preserve Firebase and other default paths
++  # Also explicitly add Firebase paths to ensure they are not lost
++  s.pod_target_xcconfig = {
++    'HEADER_SEARCH_PATHS' => "$(inherited) ${PODS_ROOT}/Headers/Public/Firebase ${PODS_ROOT}/Headers/Public/FirebaseCore ${PODS_ROOT}/Headers/Public/RNFBApp ${PODS_CONFIGURATION_BUILD_DIR}/RNFBApp ${PODS_ROOT}/../node_modules/@react-native-firebase/app/ios/RNFBApp"
++  }
++
+   # React Native dependencies
+   s.dependency          'React-Core'
+   s.dependency          'RNFBApp'
+diff --git a/node_modules/@react-native-firebase/analytics/ios/RNFBAnalytics/RNFBAnalyticsModule.m b/node_modules/@react-native-firebase/analytics/ios/RNFBAnalytics/RNFBAnalyticsModule.m
+index 4405104..4dc84c3 100644
+--- a/node_modules/@react-native-firebase/analytics/ios/RNFBAnalytics/RNFBAnalyticsModule.m
++++ b/node_modules/@react-native-firebase/analytics/ios/RNFBAnalytics/RNFBAnalyticsModule.m
+@@ -16,6 +16,14 @@
+  */
+ 
+ #import <Firebase/Firebase.h>
++// CRITICAL: Explicitly import FIRAnalytics and its categories to ensure they're available
++// Firebase.h uses conditional import __has_include(<FirebaseAnalytics/FirebaseAnalytics.h>)
++// but with use_frameworks! :linkage => :static, the symlink may not be found correctly
++// So we import FIRAnalytics headers directly - they will be found via HEADER_SEARCH_PATHS configured in podspec
++#import <FirebaseAnalytics/FIRAnalytics.h>
++#import <FirebaseAnalytics/FIRAnalytics+Consent.h>
++#import <FirebaseAnalytics/FIRAnalytics+OnDevice.h>
++#import <FirebaseAnalytics/FIRAnalytics+AppDelegate.h>
+ #import <React/RCTUtils.h>
+ 
+ #import <RNFBApp/RNFBSharedUtils.h>

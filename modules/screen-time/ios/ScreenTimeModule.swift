@@ -6,7 +6,8 @@ import React
 
 // Import the global selection from FamilyActivityPickerModule
 // This is defined in FamilyActivityPickerModule.swift
-// Note: globalActivitySelection is declared in FamilyActivityPickerModule.swift
+// Note: For Expo Modules API, both modules will be compiled into the same
+// Xcode project, so the global variable will be accessible across modules
 
 @objc(ScreenTimeModule)
 class ScreenTimeModule: NSObject {

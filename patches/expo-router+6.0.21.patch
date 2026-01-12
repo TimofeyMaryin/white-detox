@@ -1,0 +1,14 @@
+diff --git a/node_modules/expo-router/entry-classic.js b/node_modules/expo-router/entry-classic.js
+index d079ba7..e5aa11c 100644
+--- a/node_modules/expo-router/entry-classic.js
++++ b/node_modules/expo-router/entry-classic.js
+@@ -2,6 +2,9 @@
+ // on web.
+ import '@expo/metro-runtime';
+ 
++// CRITICAL: Import react-native-reanimated BEFORE expo-router to ensure native module is initialized
++import 'react-native-reanimated';
++
+ import { App } from 'expo-router/build/qualified-entry';
+ import { renderRootComponent } from 'expo-router/build/renderRootComponent';
+ 

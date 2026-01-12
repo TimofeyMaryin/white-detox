@@ -1,5 +1,5 @@
 import { Colors } from '@/constants/theme';
-import FamilyActivityPickerModule from '@/modules/family-activity-picker/FamilyActivityPickerModule';
+import FamilyActivityPickerModule from '@/modules/family-activity-picker';
 import { useEffect, useState } from 'react';
 import { Platform, StyleSheet } from 'react-native';
 

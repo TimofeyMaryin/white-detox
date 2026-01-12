@@ -1,5 +1,5 @@
 import { Colors } from '@/constants/theme';
-import FamilyActivityPickerModule from '@/modules/family-activity-picker/FamilyActivityPickerModule';
+import FamilyActivityPickerModule from '@/modules/family-activity-picker';
 import { BlockerSchedule } from '@/types/blocker';
 import React, { useState } from 'react';
 import { Alert, ScrollView, StyleSheet, TextInput, TouchableOpacity, View } from 'react-native';

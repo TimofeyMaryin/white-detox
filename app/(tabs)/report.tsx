@@ -4,7 +4,7 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Colors } from '@/constants/theme';
 import { formatTimeShort } from '@/utils/timeFormatter';
-import ScreenTimeModule from '@/modules/screen-time/ScreenTimeModule';
+import ScreenTimeModule from '@/modules/screen-time';
 import { useBlocker } from '@/hooks/use-blocker';
 import { ScreenTimeChart } from '@/components/screen-time-chart';
 import { useRouter } from 'expo-router';

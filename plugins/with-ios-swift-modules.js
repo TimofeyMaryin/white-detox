@@ -1,75 +1,67 @@
-require File.join(File.dirname(`node --print "require.resolve('expo/package.json')"`), "scripts/autolinking")
-require File.join(File.dirname(`node --print "require.resolve('react-native/package.json')"`), "scripts/react_native_pods")
+const { withDangerousMod } = require('@expo/config-plugins');
+const fs = require('fs');
+const path = require('path');
 
-require 'json'
-require 'fileutils'
-podfile_properties = JSON.parse(File.read(File.join(__dir__, 'Podfile.properties.json'))) rescue {}
+/**
+ * Expo config plugin to configure iOS Podfile for Swift modules and Firebase
+ * This ensures use_frameworks! and use_modular_headers! are set correctly
+ */
+const withIosSwiftModules = (config) => {
+  return withDangerousMod(config, [
+    'ios',
+    async (config) => {
+      const podfilePath = path.join(config.modRequest.platformProjectRoot, 'Podfile');
+      
+      if (!fs.existsSync(podfilePath)) {
+        return config;
+      }
 
-def ccache_enabled?(podfile_properties)
-  # Environment variable takes precedence
-  return ENV['USE_CCACHE'] == '1' if ENV['USE_CCACHE']
-  
-  # Fall back to Podfile properties
-  podfile_properties['apple.ccacheEnabled'] == 'true'
-end
+      let podfileContent = fs.readFileSync(podfilePath, 'utf-8');
+      let modified = false;
 
-ENV['RCT_NEW_ARCH_ENABLED'] ||= '0' if podfile_properties['newArchEnabled'] == 'false'
-ENV['EX_DEV_CLIENT_NETWORK_INSPECTOR'] ||= podfile_properties['EX_DEV_CLIENT_NETWORK_INSPECTOR']
-ENV['RCT_USE_RN_DEP'] ||= '1' if podfile_properties['ios.buildReactNativeFromSource'] != 'true' && podfile_properties['newArchEnabled'] != 'false'
-ENV['RCT_USE_PREBUILT_RNCORE'] ||= '1' if podfile_properties['ios.buildReactNativeFromSource'] != 'true' && podfile_properties['newArchEnabled'] != 'false'
-platform :ios, podfile_properties['ios.deploymentTarget'] || '15.1'
-
-prepare_react_native_project!
-
-# Added by with-ios-swift-modules plugin
+      // Add use_frameworks! after use_native_modules! for Firebase
+      // IMPORTANT: For React Native Firebase, we need $RNFirebaseAsStaticFramework = true
+      // and we should NOT use use_modular_headers! as it conflicts with use_frameworks!
+      if (!podfileContent.includes('$RNFirebaseAsStaticFramework')) {
+        // Add the Firebase static framework setting before the target
+        const targetPattern = /(target\s+['"][^'"]+['"]\s+do)/;
+        if (targetPattern.test(podfileContent)) {
+          podfileContent = podfileContent.replace(targetPattern, `# Added by with-ios-swift-modules plugin
 # Enable Firebase as static framework (required for use_frameworks!)
 $RNFirebaseAsStaticFramework = true
 
-target 'DopamineDetoxSelfControl' do
-  use_expo_modules!
-
-  if ENV['EXPO_USE_COMMUNITY_AUTOLINKING'] == '1'
-    config_command = ['node', '-e', "process.argv=['', '', 'config'];require('@react-native-community/cli').run()"];
-  else
-    config_command = [
-      'node',
-      '--no-warnings',
-      '--eval',
-      'require(\'expo/bin/autolinking\')',
-      'expo-modules-autolinking',
-      'react-native-config',
-      '--json',
-      '--platform',
-      'ios'
-    ]
-  end
-
-  config = use_native_modules!(config_command)
+$1`);
+          modified = true;
+        }
+      }
+      
+      if (!podfileContent.includes('use_frameworks! :linkage => :static')) {
+        const useNativeModulesPattern = /(config = use_native_modules!\(config_command\))/;
+        
+        if (useNativeModulesPattern.test(podfileContent)) {
+          const replacement = `$1
 
   # Added by with-ios-swift-modules plugin
   # Use frameworks with static linkage for Swift pods (required for Firebase)
   # Static linkage prevents React-Core module import issues
-  use_frameworks! :linkage => :static
+  use_frameworks! :linkage => :static`;
+          
+          podfileContent = podfileContent.replace(useNativeModulesPattern, replacement);
+          modified = true;
+        }
+      }
 
-  use_frameworks! :linkage => podfile_properties['ios.useFrameworks'].to_sym if podfile_properties['ios.useFrameworks']
-  use_frameworks! :linkage => ENV['USE_FRAMEWORKS'].to_sym if ENV['USE_FRAMEWORKS']
-
-  use_react_native!(
-    :path => config[:reactNativePath],
-    :hermes_enabled => podfile_properties['expo.jsEngine'] == nil || podfile_properties['expo.jsEngine'] == 'hermes',
-    # An absolute path to your application root.
-    :app_path => "#{Pod::Config.instance.installation_root}/..",
-    :privacy_file_aggregation_enabled => podfile_properties['apple.privacyManifestAggregationEnabled'] != 'false',
-  )
-
-  post_install do |installer|
-    react_native_post_install(
-      installer,
-      config[:reactNativePath],
-      :mac_catalyst_enabled => false,
-      :ccache_enabled => ccache_enabled?(podfile_properties),
-    )
-  
+      // Update post_install to ensure DEFINES_MODULE is set and fix React Native Firebase issues
+      // Check if post_install already has our settings
+      const hasOurSettingsInPostInstall = podfileContent.includes("config.build_settings['CLANG_ALLOW_NON_MODULAR_INCLUDES_IN_FRAMEWORK_MODULES']");
+      
+      if (podfileContent.includes('post_install do |installer|') && !hasOurSettingsInPostInstall) {
+        // Find the closing of react_native_post_install and add our code before "end"
+        // Match: :ccache_enabled => ... followed by )\n  end
+        const postInstallEndPattern = /(:ccache_enabled\s*=>\s*ccache_enabled\?\(podfile_properties\),\s*\)\s*\n\s+)(end)/;
+        
+        if (postInstallEndPattern.test(podfileContent)) {
+          const additionalCode = `
     # Added by with-ios-swift-modules plugin
     # Fix React Native Firebase issues with frameworks and React-Core
     installer.pods_project.targets.each do |target|
@@ -259,7 +251,7 @@ target 'DopamineDetoxSelfControl' do
           other_cflags_str = other_cflags.join(' ')
           
           # Extract version from -DWORKLETS_VERSION=0.5.1 pattern (without quotes)
-          worklets_version_match = other_cflags_str.match(/-DWORKLETS_VERSION=([^s"']+)/)
+          worklets_version_match = other_cflags_str.match(/-DWORKLETS_VERSION=([^\s"']+)/)
           if worklets_version_match
             worklets_version = worklets_version_match[1]
           end
@@ -301,7 +293,7 @@ target 'DopamineDetoxSelfControl' do
           # with use_frameworks! the macro expansion may not work correctly
           # So we add it directly as a string literal
           unless other_cpp_flags.any? { |flag| flag.to_s.match?(/-DWORKLETS_VERSION_STRING=/) }
-            other_cpp_flags << "-DWORKLETS_VERSION_STRING=\"#{worklets_version}\""
+            other_cpp_flags << "-DWORKLETS_VERSION_STRING=\\\"#{worklets_version}\\\""
           end
           
           config.build_settings['OTHER_CPLUSPLUSFLAGS'] = other_cpp_flags
@@ -311,7 +303,6 @@ target 'DopamineDetoxSelfControl' do
       # CRITICAL: Fix react-native-reanimated REANIMATED_VERSION undefined error
       # Ensure REANIMATED_VERSION is properly defined in OTHER_CPLUSPLUSFLAGS
       # This fixes the "Mismatch between JavaScript part and native part" error
-      # The issue occurs because with use_frameworks! flags from podspec may not apply correctly
       if target.name == 'RNReanimated'
         target.build_configurations.each do |config|
           reanimated_version = '4.1.6' # Version from package.json
@@ -322,7 +313,7 @@ target 'DopamineDetoxSelfControl' do
           other_cflags_str = other_cflags.join(' ')
           
           # Extract version from -DREANIMATED_VERSION=4.1.6 pattern
-          reanimated_version_match = other_cflags_str.match(/-DREANIMATED_VERSION=([^\s"']+)/)
+          reanimated_version_match = other_cflags_str.match(/-DREANIMATED_VERSION=([^\\s"']+)/)
           if reanimated_version_match
             reanimated_version = reanimated_version_match[1]
           end
@@ -402,7 +393,33 @@ target 'DopamineDetoxSelfControl' do
           config.build_settings['HEADER_SEARCH_PATHS'] = header_search_paths.uniq
         end
       end
-    
+    end
+    `;
+          
+          podfileContent = podfileContent.replace(postInstallEndPattern, `$1${additionalCode}  $2`);
+          modified = true;
+        }
+      }
+
+      // Add require 'fileutils' if not present
+      if (!podfileContent.includes("require 'fileutils'")) {
+        const requireJsonPattern = /(require 'json'\n)/;
+        if (requireJsonPattern.test(podfileContent)) {
+          podfileContent = podfileContent.replace(requireJsonPattern, "$1require 'fileutils'\n");
+          modified = true;
+        }
+      }
+
+      // Add symlink creation scripts to post_install
+      const hasSymlinkScripts = podfileContent.includes('CRITICAL: Create symlinks for RNFBApp headers');
+      
+      if (podfileContent.includes('post_install do |installer|') && !hasSymlinkScripts) {
+        // Find the last "end" before the final "end" of post_install
+        // We need to add our code before the final "end" of post_install block
+        const postInstallPattern = /(# CRITICAL: Fix Firebase\/Firebase\.h import issue with use_frameworks![\s\S]*?config\.build_settings\['HEADER_SEARCH_PATHS'\] = header_search_paths\.uniq\s+end\s+end\s+)(end\s+end)/;
+        
+        if (postInstallPattern.test(podfileContent)) {
+          const symlinkCode = `
     # CRITICAL: Create symlinks for RNFBApp headers to enable modular imports
     # This fixes "RNFBApp/RNFBSharedUtils.h file not found" errors
     rnfbapp_headers_dir = File.join(installer.sandbox.root, 'Headers', 'Public', 'RNFBApp')
@@ -488,6 +505,20 @@ target 'DopamineDetoxSelfControl' do
         end
       end
     end
-  end
-      end
-end
+`;
+          
+          podfileContent = podfileContent.replace(postInstallPattern, `$1${symlinkCode}  $2`);
+          modified = true;
+        }
+      }
+
+      if (modified) {
+        fs.writeFileSync(podfilePath, podfileContent);
+      }
+
+      return config;
+    },
+  ]);
+};
+
+module.exports = withIosSwiftModules;

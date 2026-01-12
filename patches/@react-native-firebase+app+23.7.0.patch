@@ -1,0 +1,27 @@
+diff --git a/node_modules/@react-native-firebase/app/RNFBApp.podspec b/node_modules/@react-native-firebase/app/RNFBApp.podspec
+index d37d9e4..2cf860b 100644
+--- a/node_modules/@react-native-firebase/app/RNFBApp.podspec
++++ b/node_modules/@react-native-firebase/app/RNFBApp.podspec
+@@ -23,6 +23,22 @@ Pod::Spec.new do |s|
+   s.tvos.deployment_target = firebase_tvos_target
+   s.cocoapods_version   = '>= 1.12.0'
+   s.source_files        = "ios/**/*.{h,m}"
++  s.public_header_files = "ios/RNFBApp/*.h"
++  s.header_dir          = "RNFBApp"
++  s.header_mappings_dir = "ios"
++  
++  # CRITICAL: Configure header export for use_frameworks! :linkage => :static
++  # This ensures that RNFBApp headers are available to other RNFB modules like RNFBAnalytics
++  s.pod_target_xcconfig = {
++    'HEADER_SEARCH_PATHS' => "$(inherited) ${PODS_ROOT}/Headers/Public/RNFBApp ${PODS_CONFIGURATION_BUILD_DIR}/RNFBApp",
++    'PUBLIC_HEADERS_FOLDER_PATH' => '${PODS_CONFIGURATION_BUILD_DIR}/RNFBApp/RNFBApp',
++    'DEFINES_MODULE' => 'YES',
++    'CLANG_ENABLE_MODULES' => 'YES'
++  }
++  
++  s.xcconfig = {
++    'HEADER_SEARCH_PATHS' => "$(inherited) ${PODS_ROOT}/Headers/Public/RNFBApp ${PODS_CONFIGURATION_BUILD_DIR}/RNFBApp"
++  }
+ 
+   # React Native dependencies
+   s.dependency          'React-Core'

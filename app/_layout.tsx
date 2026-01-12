@@ -1,9 +1,12 @@
+// CRITICAL: react-native-reanimated must be imported FIRST, before any other imports
+// This ensures the native module is properly initialized
+import 'react-native-reanimated';
+
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { DarkTheme, ThemeProvider } from '@react-navigation/native';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect, useState } from 'react';
-import 'react-native-reanimated';
 
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useOnboarding } from '@/hooks/use-onboarding';

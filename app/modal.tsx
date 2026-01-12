@@ -6,7 +6,7 @@ import { ScheduleForm } from '@/components/schedule-form';
 import { AppGroup } from '@/types/app-group';
 import { BlockerSchedule } from '@/types/blocker';
 import { useBlocker } from '@/hooks/use-blocker';
-import ScreenTimeModule from '@/modules/screen-time/ScreenTimeModule';
+import ScreenTimeModule from '@/modules/screen-time';
 import { Alert } from 'react-native';
 
 export default function ModalScreen() {

@@ -32,10 +32,12 @@
     },
     "plugins": [
       "expo-router",
+      "./plugins/with-ios-swift-modules.js",
+      "./plugins/with-ios-firebase-config.js",
       [
         "expo-splash-screen",
         {
-          "image": "./assets/images/splash-icon.png",
+          "image": "./assets/images/icon.jpg",
           "imageWidth": 200,
           "resizeMode": "contain",
           "backgroundColor": "#ffffff",
