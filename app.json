@@ -32,7 +32,6 @@
     },
     "plugins": [
       "expo-router",
-      "./plugins/with-ios-swift-modules.js",
       "./plugins/with-ios-firebase-config.js",
       [
         "expo-splash-screen",
