@@ -24,6 +24,7 @@ interface ScreenTimeModuleInterface {
     daysOfWeek: number[]
   ): Promise<boolean>;
   removeDeviceActivitySchedule(scheduleId: string): Promise<boolean>;
+  clearAllBlockingSettings(): Promise<boolean>;
 }
 
 const NativeScreenTimeModule = NativeModules.ScreenTimeModule;
@@ -60,6 +61,10 @@ const fallbackScreenTimeModule: ScreenTimeModuleInterface = {
     return false;
   },
   async removeDeviceActivitySchedule() {
+    console.warn('ScreenTimeModule not available - using fallback');
+    return false;
+  },
+  async clearAllBlockingSettings() {
     console.warn('ScreenTimeModule not available - using fallback');
     return false;
   },

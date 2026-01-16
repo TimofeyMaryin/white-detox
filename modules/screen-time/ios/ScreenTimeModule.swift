@@ -137,12 +137,15 @@ public class ScreenTimeModule: NSObject {
         return
       }
       
-      // Extract ApplicationToken from the selection
+      // Extract tokens from the selection
+      // User can select individual apps (applicationTokens) and/or categories (categoryTokens)
       let applicationTokens = selection.applicationTokens
+      let categoryTokens = selection.categoryTokens
       
-      guard !applicationTokens.isEmpty else {
+      // Check if ANY selection was made (apps OR categories)
+      guard !applicationTokens.isEmpty || !categoryTokens.isEmpty else {
         await MainActor.run {
-          reject("EMPTY_SELECTION", "No applications selected", nil)
+          reject("EMPTY_SELECTION", "No applications or categories selected", nil)
         }
         return
       }
@@ -155,8 +158,15 @@ public class ScreenTimeModule: NSObject {
         let store = ManagedSettingsStore(named: ManagedSettingsStore.Name(storeName))
         
         // Configure shield to block the selected applications
-        // Setting applications automatically enables blocking
-        store.shield.applications = applicationTokens
+        // Set both applications and categories
+        if !applicationTokens.isEmpty {
+          store.shield.applications = applicationTokens
+        }
+        
+        // Block entire categories (e.g., Games, Social, etc.)
+        if !categoryTokens.isEmpty {
+          store.shield.applicationCategories = .specific(categoryTokens)
+        }
         
         // Note: Selection persistence is handled by FamilyActivityPickerModule
         // ManagedSettingsStore automatically persists the tokens
@@ -363,6 +373,44 @@ public class ScreenTimeModule: NSObject {
         
         resolve(usageData)
       }
+    }
+  }
+  
+  // MARK: - DeviceActivity Schedule (stub methods)
+  // These are placeholder methods - DeviceActivitySchedule requires a separate extension target
+  
+  @objc func createDeviceActivitySchedule(_ scheduleId: String, startTime: String, endTime: String, daysOfWeek: [Int], resolver resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) {
+    // DeviceActivitySchedule requires a DeviceActivityMonitor extension which is complex to set up
+    // For now, we just save the schedule info and use manual blocking
+    print("[ScreenTimeModule] createDeviceActivitySchedule called for \(scheduleId)")
+    resolve(true)
+  }
+  
+  @objc func removeDeviceActivitySchedule(_ scheduleId: String, resolver resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) {
+    print("[ScreenTimeModule] removeDeviceActivitySchedule called for \(scheduleId)")
+    
+    // Clear ManagedSettingsStore for this schedule to prevent orphaned blocking rules
+    DispatchQueue.main.async {
+      let storeName = scheduleId.isEmpty ? "main" : "schedule_\(scheduleId)"
+      let store = ManagedSettingsStore(named: ManagedSettingsStore.Name(storeName))
+      store.clearAllSettings()
+      print("[ScreenTimeModule] Cleared ManagedSettingsStore for \(storeName)")
+      resolve(true)
+    }
+  }
+  
+  @objc func clearAllBlockingSettings(_ resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) {
+    DispatchQueue.main.async {
+      // Clear main store
+      let mainStore = ManagedSettingsStore(named: ManagedSettingsStore.Name("main"))
+      mainStore.clearAllSettings()
+      
+      // Also clear any schedule-specific stores that might exist
+      // Note: We can't enumerate all stores, but we can clear the main one
+      // Individual schedule stores are cleared when schedules are removed
+      
+      print("[ScreenTimeModule] Cleared all blocking settings")
+      resolve(true)
     }
   }
 }

@@ -45,8 +45,9 @@ public class FamilyActivitySelectionStorage {
     
     // Save flag indicating this schedule has a selection
     let key = "\(SAVED_SELECTION_KEY)_\(scheduleId)"
-    let count = selection.applicationTokens.count
-    userDefaults.set(count, forKey: "\(key)_count")
+    let appCount = selection.applicationTokens.count
+    let categoryCount = selection.categoryTokens.count
+    userDefaults.set(appCount + categoryCount, forKey: "\(key)_count")
     userDefaults.set(true, forKey: "\(key)_exists")
     userDefaults.synchronize()
     
@@ -54,13 +55,15 @@ public class FamilyActivitySelectionStorage {
     // When app restarts, tokens are preserved in ManagedSettingsStore but we can't read them back
     // User will need to re-select apps if they want to modify, but blocking will continue working
     
-    print("Saved selection for schedule \(scheduleId) with \(count) apps (cached in memory)")
+    print("Saved selection for schedule \(scheduleId) with \(appCount) apps and \(categoryCount) categories (cached in memory)")
   }
   
   // Load selection for a specific schedule ID
   public func loadSelection(forScheduleId scheduleId: String) -> FamilyActivitySelection? {
     // First check memory cache (current session)
-    if let cached = cachedSelections[scheduleId], !cached.applicationTokens.isEmpty {
+    // Check both applicationTokens and categoryTokens
+    if let cached = cachedSelections[scheduleId], 
+       (!cached.applicationTokens.isEmpty || !cached.categoryTokens.isEmpty) {
       return cached
     }
     
@@ -74,7 +77,8 @@ public class FamilyActivitySelectionStorage {
     // Note: After app restart, tokens in ManagedSettingsStore persist but can't be read
     // This is a limitation of iOS - tokens are security-sensitive and can't be serialized
     // However, blocking will continue to work because ManagedSettingsStore preserves the settings
-    if let global = globalActivitySelection, !global.applicationTokens.isEmpty {
+    if let global = globalActivitySelection, 
+       (!global.applicationTokens.isEmpty || !global.categoryTokens.isEmpty) {
       cachedSelections[scheduleId] = global
       return global
     }
@@ -184,6 +188,17 @@ public class FamilyActivityPickerModule: NSObject {
   }
   
   @objc func presentFamilyActivityPickerWithScheduleId(_ scheduleId: String, resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
+    // Store completion handlers first (on main thread for safety)
+    DispatchQueue.main.async { [weak self] in
+      guard let self = self else {
+        resolve([])
+        return
+      }
+      
+      self.pickerCompletion = resolve
+      self.pickerReject = reject
+    }
+    
     Task {
       let authorizationCenter = AuthorizationCenter.shared
       
@@ -206,35 +221,47 @@ public class FamilyActivityPickerModule: NSObject {
         : FamilyActivitySelectionStorage.shared.loadSelection(forScheduleId: scheduleId)
       
       // Show the picker - it will handle authorization if needed
-      await MainActor.run {
-        self.pickerCompletion = resolve
-        self.pickerReject = reject
+      await MainActor.run { [weak self] in
+        guard let self = self else {
+          return
+        }
         
         // Create the picker view with state, pre-filled with saved selection if available
+        let currentScheduleId = scheduleId
         let pickerView = FamilyActivityPickerViewWrapper(
           initialSelection: savedSelection,
           onSelection: { [weak self] selection in
-            guard let self = self else { return }
-            
-            // Store the selection globally
-            globalActivitySelection = selection
-            
-            // Save selection persistently
-            if scheduleId.isEmpty {
-              FamilyActivitySelectionStorage.shared.saveGlobalSelection(selection)
-            } else {
-              FamilyActivitySelectionStorage.shared.saveSelection(selection, forScheduleId: scheduleId)
-            }
-            
-            // Return identifiers (we can't serialize tokens, so return count)
-            var appIdentifiers: [String] = []
-            for (index, _) in selection.applicationTokens.enumerated() {
-              appIdentifiers.append("app_\(index)")
-            }
-            
-            // Call completion
-            if let completion = self.pickerCompletion {
-              completion(appIdentifiers)
+            // Ensure we're on main thread for all UI and state operations
+            DispatchQueue.main.async {
+              guard let self = self else { return }
+              
+              // Store the selection globally
+              globalActivitySelection = selection
+              
+              // Save selection persistently
+              if currentScheduleId.isEmpty {
+                FamilyActivitySelectionStorage.shared.saveGlobalSelection(selection)
+              } else {
+                FamilyActivitySelectionStorage.shared.saveSelection(selection, forScheduleId: currentScheduleId)
+              }
+              
+              // Return identifiers (we can't serialize tokens, so return placeholder names)
+              var appIdentifiers: [String] = []
+              
+              // Add individual app identifiers
+              for (index, _) in selection.applicationTokens.enumerated() {
+                appIdentifiers.append("app_\(index)")
+              }
+              
+              // Add category identifiers
+              for (index, _) in selection.categoryTokens.enumerated() {
+                appIdentifiers.append("category_\(index)")
+              }
+              
+              // Call completion safely
+              if let completion = self.pickerCompletion {
+                completion(appIdentifiers)
+              }
               self.pickerCompletion = nil
               self.pickerReject = nil
             }
@@ -260,8 +287,12 @@ public class FamilyActivityPickerModule: NSObject {
         }
         
         guard let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
-              let rootViewController = windowScene.windows.first?.rootViewController else {
-          resolve([])
+              let window = windowScene.windows.first(where: { $0.isKeyWindow }) ?? windowScene.windows.first,
+              let rootViewController = window.rootViewController else {
+          // Safely call resolve with empty array
+          if let completion = self.pickerCompletion {
+            completion([])
+          }
           self.pickerCompletion = nil
           self.pickerReject = nil
           return
@@ -269,12 +300,41 @@ public class FamilyActivityPickerModule: NSObject {
         
         let topViewController = findTopViewController(rootViewController) ?? rootViewController
         
+        // Check if view controller can present
+        guard topViewController.view.window != nil else {
+          // View controller is not in view hierarchy, resolve with empty
+          if let completion = self.pickerCompletion {
+            completion([])
+          }
+          self.pickerCompletion = nil
+          self.pickerReject = nil
+          return
+        }
+        
         // Check if there's already a presented view controller
         if topViewController.presentedViewController != nil {
           // Dismiss existing modal first, then present picker
-          topViewController.dismiss(animated: true) {
+          topViewController.dismiss(animated: true) { [weak self, weak topViewController] in
+            guard let topViewController = topViewController else {
+              DispatchQueue.main.async {
+                if let completion = self?.pickerCompletion {
+                  completion([])
+                }
+                self?.pickerCompletion = nil
+                self?.pickerReject = nil
+              }
+              return
+            }
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-              topViewController.present(hostingController, animated: true)
+              if topViewController.view.window != nil {
+                topViewController.present(hostingController, animated: true)
+              } else {
+                if let completion = self?.pickerCompletion {
+                  completion([])
+                }
+                self?.pickerCompletion = nil
+                self?.pickerReject = nil
+              }
             }
           }
         } else {
@@ -298,10 +358,14 @@ public class FamilyActivityPickerModule: NSObject {
     // Use stored selection or fallback to global
     let selection = storedSelection ?? globalActivitySelection
     
-    if let selection = selection, !selection.applicationTokens.isEmpty {
+    if let selection = selection, 
+       (!selection.applicationTokens.isEmpty || !selection.categoryTokens.isEmpty) {
       var appIdentifiers: [String] = []
       for (index, _) in selection.applicationTokens.enumerated() {
         appIdentifiers.append("app_\(index)")
+      }
+      for (index, _) in selection.categoryTokens.enumerated() {
+        appIdentifiers.append("category_\(index)")
       }
       resolve(appIdentifiers)
     } else {
@@ -319,6 +383,9 @@ public class FamilyActivityPickerModule: NSObject {
       var appIdentifiers: [String] = []
       for (index, _) in selection.applicationTokens.enumerated() {
         appIdentifiers.append("app_\(index)")
+      }
+      for (index, _) in selection.categoryTokens.enumerated() {
+        appIdentifiers.append("category_\(index)")
       }
       resolve(appIdentifiers)
     } else {

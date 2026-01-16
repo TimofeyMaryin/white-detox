@@ -16,6 +16,5 @@ export interface BlockerState {
   pausedAt?: Date;
   currentScheduleId?: string;
   savedTime: number; // in seconds
-  grayscaleMode: boolean;
 }
 

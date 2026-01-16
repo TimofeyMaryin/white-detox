@@ -1,8 +1,9 @@
 import { Colors } from '@/constants/theme';
 import FamilyActivityPickerModule from '@/modules/family-activity-picker';
 import { BlockerSchedule } from '@/types/blocker';
+import DateTimePicker from '@react-native-community/datetimepicker';
 import React, { useState } from 'react';
-import { Alert, ScrollView, StyleSheet, TextInput, TouchableOpacity, View } from 'react-native';
+import { Alert, Modal, Platform, ScrollView, StyleSheet, TextInput, TouchableOpacity, View } from 'react-native';
 import { IOSActivityPicker } from './ios-activity-picker';
 import { ThemedText } from './themed-text';
 import { ThemedView } from './themed-view';
@@ -16,6 +17,21 @@ interface ScheduleFormProps {
 
 const DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
+// Helper to convert "HH:mm" string to Date object
+const timeStringToDate = (timeString: string): Date => {
+  const [hours, minutes] = timeString.split(':').map(Number);
+  const date = new Date();
+  date.setHours(hours || 0, minutes || 0, 0, 0);
+  return date;
+};
+
+// Helper to convert Date object to "HH:mm" string
+const dateToTimeString = (date: Date): string => {
+  const hours = date.getHours().toString().padStart(2, '0');
+  const minutes = date.getMinutes().toString().padStart(2, '0');
+  return `${hours}:${minutes}`;
+};
+
 export function ScheduleForm({ schedule, onSave, onCancel }: ScheduleFormProps) {
   const [name, setName] = useState(schedule?.name || '');
   const [startTime, setStartTime] = useState(schedule?.startTime || '09:00');
@@ -24,6 +40,48 @@ export function ScheduleForm({ schedule, onSave, onCancel }: ScheduleFormProps) 
   const [isActive, setIsActive] = useState(schedule?.isActive ?? true);
   const [apps, setApps] = useState<string[]>(schedule?.apps || []);
   const [showPicker, setShowPicker] = useState(false);
+  
+  // Time picker states
+  const [showStartTimePicker, setShowStartTimePicker] = useState(false);
+  const [showEndTimePicker, setShowEndTimePicker] = useState(false);
+  const [tempStartTime, setTempStartTime] = useState(timeStringToDate(startTime));
+  const [tempEndTime, setTempEndTime] = useState(timeStringToDate(endTime));
+
+  const handleStartTimeChange = (event: any, selectedDate?: Date) => {
+    if (Platform.OS === 'android') {
+      setShowStartTimePicker(false);
+      if (selectedDate) {
+        setStartTime(dateToTimeString(selectedDate));
+      }
+    } else {
+      if (selectedDate) {
+        setTempStartTime(selectedDate);
+      }
+    }
+  };
+
+  const handleEndTimeChange = (event: any, selectedDate?: Date) => {
+    if (Platform.OS === 'android') {
+      setShowEndTimePicker(false);
+      if (selectedDate) {
+        setEndTime(dateToTimeString(selectedDate));
+      }
+    } else {
+      if (selectedDate) {
+        setTempEndTime(selectedDate);
+      }
+    }
+  };
+
+  const confirmStartTime = () => {
+    setStartTime(dateToTimeString(tempStartTime));
+    setShowStartTimePicker(false);
+  };
+
+  const confirmEndTime = () => {
+    setEndTime(dateToTimeString(tempEndTime));
+    setShowEndTimePicker(false);
+  };
 
   const toggleDay = (dayIndex: number) => {
     if (selectedDays.includes(dayIndex)) {
@@ -91,24 +149,32 @@ export function ScheduleForm({ schedule, onSave, onCancel }: ScheduleFormProps) 
 
         <View style={styles.section}>
           <ThemedText style={styles.label}>Start Time</ThemedText>
-          <TextInput
-            style={styles.input}
-            value={startTime}
-            onChangeText={setStartTime}
-            placeholder="HH:mm"
-            placeholderTextColor={Colors.dark.icon}
-          />
+          <TouchableOpacity
+            style={styles.timeInput}
+            onPress={() => {
+              setTempStartTime(timeStringToDate(startTime));
+              setShowStartTimePicker(true);
+            }}
+            activeOpacity={0.7}
+          >
+            <ThemedText style={styles.timeInputText}>{startTime}</ThemedText>
+            <IconSymbol name="clock.fill" size={20} color={Colors.dark.icon} />
+          </TouchableOpacity>
         </View>
 
         <View style={styles.section}>
           <ThemedText style={styles.label}>End Time</ThemedText>
-          <TextInput
-            style={styles.input}
-            value={endTime}
-            onChangeText={setEndTime}
-            placeholder="HH:mm"
-            placeholderTextColor={Colors.dark.icon}
-          />
+          <TouchableOpacity
+            style={styles.timeInput}
+            onPress={() => {
+              setTempEndTime(timeStringToDate(endTime));
+              setShowEndTimePicker(true);
+            }}
+            activeOpacity={0.7}
+          >
+            <ThemedText style={styles.timeInputText}>{endTime}</ThemedText>
+            <IconSymbol name="clock.fill" size={20} color={Colors.dark.icon} />
+          </TouchableOpacity>
         </View>
 
         <View style={styles.section}>
@@ -188,6 +254,90 @@ export function ScheduleForm({ schedule, onSave, onCancel }: ScheduleFormProps) 
         onSelect={handlePickerSelect}
         selectedApps={apps}
       />
+
+      {/* Start Time Picker Modal */}
+      {Platform.OS === 'ios' ? (
+        <Modal
+          visible={showStartTimePicker}
+          transparent
+          animationType="slide"
+        >
+          <View style={styles.modalOverlay}>
+            <View style={styles.pickerContainer}>
+              <View style={styles.pickerHeader}>
+                <TouchableOpacity onPress={() => setShowStartTimePicker(false)}>
+                  <ThemedText style={styles.pickerCancelButton}>Cancel</ThemedText>
+                </TouchableOpacity>
+                <ThemedText style={styles.pickerTitle}>Start Time</ThemedText>
+                <TouchableOpacity onPress={confirmStartTime}>
+                  <ThemedText style={styles.pickerDoneButton}>Done</ThemedText>
+                </TouchableOpacity>
+              </View>
+              <View style={styles.pickerWrapper}>
+                <DateTimePicker
+                  value={tempStartTime}
+                  mode="time"
+                  display="spinner"
+                  onChange={handleStartTimeChange}
+                  textColor={Colors.dark.text}
+                  style={styles.picker}
+                />
+              </View>
+            </View>
+          </View>
+        </Modal>
+      ) : (
+        showStartTimePicker && (
+          <DateTimePicker
+            value={timeStringToDate(startTime)}
+            mode="time"
+            is24Hour
+            onChange={handleStartTimeChange}
+          />
+        )
+      )}
+
+      {/* End Time Picker Modal */}
+      {Platform.OS === 'ios' ? (
+        <Modal
+          visible={showEndTimePicker}
+          transparent
+          animationType="slide"
+        >
+          <View style={styles.modalOverlay}>
+            <View style={styles.pickerContainer}>
+              <View style={styles.pickerHeader}>
+                <TouchableOpacity onPress={() => setShowEndTimePicker(false)}>
+                  <ThemedText style={styles.pickerCancelButton}>Cancel</ThemedText>
+                </TouchableOpacity>
+                <ThemedText style={styles.pickerTitle}>End Time</ThemedText>
+                <TouchableOpacity onPress={confirmEndTime}>
+                  <ThemedText style={styles.pickerDoneButton}>Done</ThemedText>
+                </TouchableOpacity>
+              </View>
+              <View style={styles.pickerWrapper}>
+                <DateTimePicker
+                  value={tempEndTime}
+                  mode="time"
+                  display="spinner"
+                  onChange={handleEndTimeChange}
+                  textColor={Colors.dark.text}
+                  style={styles.picker}
+                />
+              </View>
+            </View>
+          </View>
+        </Modal>
+      ) : (
+        showEndTimePicker && (
+          <DateTimePicker
+            value={timeStringToDate(endTime)}
+            mode="time"
+            is24Hour
+            onChange={handleEndTimeChange}
+          />
+        )
+      )}
     </ThemedView>
   );
 }
@@ -321,6 +471,61 @@ const styles = StyleSheet.create({
     fontSize: 14,
     opacity: 0.7,
     fontStyle: 'italic',
+  },
+  timeInput: {
+    backgroundColor: '#1a1a1a',
+    borderWidth: 1,
+    borderColor: '#333333',
+    borderRadius: 12,
+    padding: 16,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  timeInputText: {
+    fontSize: 16,
+    color: Colors.dark.text,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'flex-end',
+  },
+  pickerContainer: {
+    backgroundColor: '#1a1a1a',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    paddingBottom: 40,
+  },
+  pickerHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#333333',
+  },
+  pickerTitle: {
+    fontSize: 17,
+    fontWeight: '600',
+  },
+  pickerCancelButton: {
+    fontSize: 17,
+    color: Colors.dark.icon,
+  },
+  pickerDoneButton: {
+    fontSize: 17,
+    fontWeight: '600',
+    color: Colors.dark.primary,
+  },
+  picker: {
+    height: 200,
+    width: '100%',
+    alignSelf: 'center',
+  },
+  pickerWrapper: {
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });
 

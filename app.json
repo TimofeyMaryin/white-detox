@@ -15,7 +15,7 @@
       "category": "public.app-category.productivity",
       "googleServicesFile": "./GoogleService-Info.plist",
       "entitlements": {
-        "com.apple.developer.family-controls": ["com.apple.developer.family-controls.authorization"]
+        "com.apple.developer.family-controls": true
       },
       "infoPlist": {
         "NSFamilyControlsUsageDescription": "This app needs Family Controls access to block distracting apps and help you stay focused on what matters."
@@ -56,7 +56,8 @@
           "icon": "./assets/images/icon.jpg",
           "color": "#00EB3F"
         }
-      ]
+      ],
+      "@react-native-community/datetimepicker"
     ],
     "experiments": {
       "typedRoutes": true,

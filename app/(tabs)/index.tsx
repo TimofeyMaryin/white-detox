@@ -12,7 +12,7 @@ import React, { useEffect, useState } from 'react';
 import { Alert, AppState, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
 
 export default function HomeScreen() {
-  const { state, startBlocking, stopBlocking, pauseBlocking, resumeBlocking, toggleGrayscale, schedules, deleteSchedule } = useBlocker();
+  const { state, startBlocking, stopBlocking, pauseBlocking, resumeBlocking, schedules, deleteSchedule } = useBlocker();
   const [hasPremium, setHasPremium] = useState(false);
 
   // Check if there are any active apps to block
@@ -165,7 +165,7 @@ export default function HomeScreen() {
   const handleStopBlocking = async () => {
     Alert.alert(
       'Stop Blocking',
-      'Do you want to stop blocking apps? You can enable grayscale mode to keep apps in black and white.',
+      'Do you want to stop blocking apps?',
       [
         { text: 'Cancel', style: 'cancel' },
         {
@@ -180,22 +180,6 @@ export default function HomeScreen() {
               console.error('Error unblocking apps:', error);
             }
             stopBlocking();
-            
-            if (hasActiveApps) {
-              setTimeout(() => {
-                Alert.alert(
-                  'Grayscale Mode',
-                  'Enable grayscale mode to make apps appear in black and white?',
-                  [
-                    { text: 'Skip', style: 'cancel' },
-                    {
-                      text: 'Enable',
-                      onPress: () => toggleGrayscale(),
-                    },
-                  ]
-                );
-              }, 300);
-            }
           },
         },
       ]
@@ -213,7 +197,7 @@ export default function HomeScreen() {
   const handleTemporaryUnlock = async () => {
     Alert.alert(
       'Temporary Unlock',
-      'Do you want to temporarily unlock apps? You can enable grayscale mode to make apps appear in black and white.',
+      'Do you want to temporarily unlock apps?',
       [
         { text: 'Cancel', style: 'cancel' },
         {
@@ -224,21 +208,6 @@ export default function HomeScreen() {
                 await ScreenTimeModule.unblockApps([]);
               }
               pauseBlocking();
-              
-              // Show grayscale option after unlock
-              setTimeout(() => {
-                Alert.alert(
-                  'Grayscale Mode',
-                  'Enable grayscale mode to make unblocked apps appear in black and white?',
-                  [
-                    { text: 'Skip', style: 'cancel' },
-                    {
-                      text: 'Enable',
-                      onPress: () => toggleGrayscale(),
-                    },
-                  ]
-                );
-              }, 300);
             } catch (error) {
               console.error('Error unlocking apps:', error);
               pauseBlocking();

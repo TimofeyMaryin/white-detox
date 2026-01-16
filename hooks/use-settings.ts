@@ -6,13 +6,11 @@ const SETTINGS_KEY = '@app_settings';
 export interface AppSettings {
   notificationsEnabled: boolean;
   autoStartEnabled: boolean;
-  grayscaleMode: boolean;
 }
 
 const defaultSettings: AppSettings = {
   notificationsEnabled: false,
   autoStartEnabled: false,
-  grayscaleMode: false,
 };
 
 export function useSettings() {

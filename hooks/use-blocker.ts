@@ -1,8 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
-import { AppState } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { BlockerState, BlockerSchedule } from '@/types/blocker';
-import GrayscaleModule from '@/modules/grayscale';
 import ScreenTimeModule from '@/modules/screen-time';
 
 const BLOCKER_STATE_KEY = '@blocker_state';
@@ -13,7 +11,6 @@ export function useBlocker() {
     isBlocking: false,
     isPaused: false,
     savedTime: 0,
-    grayscaleMode: false,
   });
   const [schedules, setSchedules] = useState<BlockerSchedule[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -21,39 +18,6 @@ export function useBlocker() {
   // Load state from storage
   useEffect(() => {
     loadState();
-  }, []);
-
-  // Check grayscale status when app becomes active
-  useEffect(() => {
-    const checkGrayscaleStatus = async () => {
-      try {
-        const isEnabled = await GrayscaleModule.isGrayscaleEnabled();
-        setState((prev) => {
-          if (prev.grayscaleMode !== isEnabled) {
-            const newState = { ...prev, grayscaleMode: isEnabled };
-            AsyncStorage.setItem(BLOCKER_STATE_KEY, JSON.stringify(newState)).catch(console.error);
-            return newState;
-          }
-          return prev;
-        });
-      } catch (error) {
-        console.error('Error checking grayscale status:', error);
-      }
-    };
-
-    // Check on mount
-    checkGrayscaleStatus();
-
-    // Check when app becomes active (user returns from Settings)
-    const subscription = AppState.addEventListener('change', (nextAppState) => {
-      if (nextAppState === 'active') {
-        checkGrayscaleStatus();
-      }
-    });
-
-    return () => {
-      subscription.remove();
-    };
   }, []);
 
   // Update saved time every second when blocking
@@ -89,15 +53,6 @@ export function useBlocker() {
       console.error('Error loading blocker state:', error);
     } finally {
       setIsLoading(false);
-    }
-  };
-
-  const saveState = async (newState: BlockerState) => {
-    try {
-      await AsyncStorage.setItem(BLOCKER_STATE_KEY, JSON.stringify(newState));
-      setState(newState);
-    } catch (error) {
-      console.error('Error saving blocker state:', error);
     }
   };
 
@@ -158,24 +113,6 @@ export function useBlocker() {
     });
   }, []);
 
-  const toggleGrayscale = useCallback(async () => {
-    // Open Settings - user needs to enable/disable grayscale manually
-    // The status will be checked automatically when app becomes active
-    try {
-      const currentStatus = await GrayscaleModule.isGrayscaleEnabled();
-      if (!currentStatus) {
-        // Open Settings to enable grayscale
-        await GrayscaleModule.enableGrayscale();
-      } else {
-        // Open Settings to disable grayscale
-        await GrayscaleModule.disableGrayscale();
-      }
-      // Don't update state here - it will be updated when app becomes active
-    } catch (error) {
-      console.error('Error toggling grayscale:', error);
-    }
-  }, []);
-
   const addSchedule = useCallback(async (schedule: BlockerSchedule) => {
     setSchedules((prevSchedules) => {
       const newSchedules = [...prevSchedules, schedule];
@@ -228,13 +165,21 @@ export function useBlocker() {
   }, []);
 
   const deleteSchedule = useCallback(async (id: string) => {
+    try {
+      // First, remove the DeviceActivity schedule and clear ManagedSettingsStore
+      // This is done before updating state to ensure native cleanup happens
+      if (ScreenTimeModule && typeof ScreenTimeModule.removeDeviceActivitySchedule === 'function') {
+        await ScreenTimeModule.removeDeviceActivitySchedule(id);
+      }
+    } catch (error) {
+      // Log but don't block deletion if native cleanup fails
+      console.error('Error removing DeviceActivity schedule:', error);
+    }
+    
+    // Then update state and storage
     setSchedules((prevSchedules) => {
       const newSchedules = prevSchedules.filter((s) => s.id !== id);
       saveSchedules(newSchedules).catch(console.error);
-      
-      // Удалить DeviceActivity расписание
-      ScreenTimeModule.removeDeviceActivitySchedule(id).catch(console.error);
-      
       return newSchedules;
     });
   }, []);
@@ -247,10 +192,8 @@ export function useBlocker() {
     stopBlocking,
     pauseBlocking,
     resumeBlocking,
-    toggleGrayscale,
     addSchedule,
     updateSchedule,
     deleteSchedule,
   };
 }
-
