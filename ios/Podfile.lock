@@ -103,6 +103,8 @@ PODS:
     - ExpoModulesCore
   - ExpoWebBrowser (15.0.10):
     - ExpoModulesCore
+  - FamilyActivityPickerModule (1.0.0):
+    - React-Core
   - FBLazyVector (0.81.5)
   - Firebase/CoreOnly (12.6.0):
     - FirebaseCore (~> 12.6.0)
@@ -175,6 +177,8 @@ PODS:
   - GoogleUtilities/UserDefaults (8.1.0):
     - GoogleUtilities/Logger
     - GoogleUtilities/Privacy
+  - GrayscaleModule (1.0.0):
+    - React-Core
   - hermes-engine (0.81.5):
     - hermes-engine/Pre-built (= 0.81.5)
   - hermes-engine/Pre-built (0.81.5)
@@ -2152,6 +2156,9 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
+  - ScreenTimeModule (1.0.0):
+    - FamilyActivityPickerModule
+    - React-Core
   - SDWebImage (5.21.5):
     - SDWebImage/Core (= 5.21.5)
   - SDWebImage/Core (5.21.5)
@@ -2184,7 +2191,9 @@ DEPENDENCIES:
   - ExpoSymbols (from `../node_modules/expo-symbols/ios`)
   - ExpoSystemUI (from `../node_modules/expo-system-ui/ios`)
   - ExpoWebBrowser (from `../node_modules/expo-web-browser/ios`)
+  - FamilyActivityPickerModule (from `../modules/family-activity-picker/ios`)
   - FBLazyVector (from `../node_modules/react-native/Libraries/FBLazyVector`)
+  - GrayscaleModule (from `../modules/grayscale/ios`)
   - hermes-engine (from `../node_modules/react-native/sdks/hermes-engine/hermes-engine.podspec`)
   - RCTDeprecation (from `../node_modules/react-native/ReactApple/Libraries/RCTFoundation/RCTDeprecation`)
   - RCTRequired (from `../node_modules/react-native/Libraries/Required`)
@@ -2261,6 +2270,7 @@ DEPENDENCIES:
   - RNReanimated (from `../node_modules/react-native-reanimated`)
   - RNScreens (from `../node_modules/react-native-screens`)
   - RNWorklets (from `../node_modules/react-native-worklets`)
+  - ScreenTimeModule (from `../modules/screen-time/ios`)
   - Yoga (from `../node_modules/react-native/ReactCommon/yoga`)
 
 SPEC REPOS:
@@ -2325,8 +2335,12 @@ EXTERNAL SOURCES:
     :path: "../node_modules/expo-system-ui/ios"
   ExpoWebBrowser:
     :path: "../node_modules/expo-web-browser/ios"
+  FamilyActivityPickerModule:
+    :path: "../modules/family-activity-picker/ios"
   FBLazyVector:
     :path: "../node_modules/react-native/Libraries/FBLazyVector"
+  GrayscaleModule:
+    :path: "../modules/grayscale/ios"
   hermes-engine:
     :podspec: "../node_modules/react-native/sdks/hermes-engine/hermes-engine.podspec"
     :tag: hermes-2025-07-07-RNv0.81.0-e0fc67142ec0763c6b6153ca2bf96df815539782
@@ -2478,6 +2492,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native-screens"
   RNWorklets:
     :path: "../node_modules/react-native-worklets"
+  ScreenTimeModule:
+    :path: "../modules/screen-time/ios"
   Yoga:
     :path: "../node_modules/react-native/ReactCommon/yoga"
 
@@ -2506,6 +2522,7 @@ SPEC CHECKSUMS:
   ExpoSymbols: 349ee2b4d7d5ff3ea8436467914f8a67635aa354
   ExpoSystemUI: 2ad325f361a2fcd96a464e8574e19935c461c9cc
   ExpoWebBrowser: 17b064c621789e41d4816c95c93f429b84971f52
+  FamilyActivityPickerModule: ea689fdb627e97d64fb50afc9a82717991a140c7
   FBLazyVector: e95a291ad2dadb88e42b06e0c5fb8262de53ec12
   Firebase: a451a7b61536298fd5cbfe3a746fd40443a50679
   FirebaseAnalytics: d0a97a0db6425e5a5d966340b87f92ca7b13a557
@@ -2514,6 +2531,7 @@ SPEC CHECKSUMS:
   FirebaseInstallations: 631b38da2e11a83daa4bfb482f79d286a5dfa7ad
   GoogleAppMeasurement: 3bf40aff49a601af5da1c3345702fcb4991d35ee
   GoogleUtilities: 00c88b9a86066ef77f0da2fab05f65d7768ed8e1
+  GrayscaleModule: e883431c7e556b14f2e3ac48d70df83d753ebd77
   hermes-engine: 9f4dfe93326146a1c99eb535b1cb0b857a3cd172
   libavif: 84bbb62fb232c3018d6f1bab79beea87e35de7b7
   libdav1d: 23581a4d8ec811ff171ed5e2e05cd27bad64c39f
@@ -2594,12 +2612,13 @@ SPEC CHECKSUMS:
   RNReanimated: 677b64e77e4cd2d630a30980c08e3317f3532fbb
   RNScreens: 33bbd1d0f86ed957557620dc94054b71db0a94ee
   RNWorklets: 76fce72926e28e304afb44f0da23b2d24f2c1fa0
+  ScreenTimeModule: 335efd98e5a054f597c38e4fd7f0c555a0ec7300
   SDWebImage: e9c98383c7572d713c1a0d7dd2783b10599b9838
   SDWebImageAVIFCoder: afe194a084e851f70228e4be35ef651df0fc5c57
   SDWebImageSVGCoder: 15a300a97ec1c8ac958f009c02220ac0402e936c
   SDWebImageWebPCoder: e38c0a70396191361d60c092933e22c20d5b1380
   Yoga: 65431d43277b661ebc7289c6c5d82f64ce42cfe0
 
-PODFILE CHECKSUM: b717d0195a9f53e31df65ceb0a18f25941b1809d
+PODFILE CHECKSUM: 2e9055874701329c615e28142c5ceba6b6ce674b
 
 COCOAPODS: 1.16.2

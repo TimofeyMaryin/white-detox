@@ -66,6 +66,13 @@ const withIosFirebaseConfig = (config) => {
         let podfileContent = fs.readFileSync(podfilePath, 'utf-8');
         let modified = false;
         
+        // Update deployment target to iOS 16.0 for ScreenTime APIs
+        podfileContent = podfileContent.replace(
+          /platform :ios, podfile_properties\['ios\.deploymentTarget'\] \|\| '[\d.]+'/,
+          "platform :ios, podfile_properties['ios.deploymentTarget'] || '16.0'"
+        );
+        console.log('✅ Set minimum iOS deployment target to 16.0');
+        
         // Add $RNFirebaseAsStaticFramework before target block
         if (!podfileContent.includes('$RNFirebaseAsStaticFramework')) {
           const targetPattern = /(target\s+['"][^'"]+['"]\s+do)/;
@@ -82,7 +89,7 @@ $1`
           }
         }
         
-        // Add use_frameworks! :linkage => :static after use_native_modules!
+        // Add local native modules and use_frameworks! after use_native_modules!
         if (!podfileContent.includes('use_frameworks! :linkage => :static')) {
           const useNativeModulesPattern = /(config = use_native_modules!\(config_command\))/;
           if (useNativeModulesPattern.test(podfileContent)) {
@@ -90,11 +97,16 @@ $1`
               useNativeModulesPattern,
               `$1
 
+  # Local native modules
+  pod 'ScreenTimeModule', :path => '../modules/screen-time/ios'
+  pod 'FamilyActivityPickerModule', :path => '../modules/family-activity-picker/ios'
+  pod 'GrayscaleModule', :path => '../modules/grayscale/ios'
+
   # Use static frameworks for Firebase compatibility
   use_frameworks! :linkage => :static`
             );
             modified = true;
-            console.log('✅ Added use_frameworks! :linkage => :static to Podfile');
+            console.log('✅ Added local native modules and use_frameworks! to Podfile');
           }
         }
         
@@ -127,6 +139,44 @@ $2`
         
         if (modified) {
           fs.writeFileSync(podfilePath, podfileContent);
+        }
+      }
+      
+      // === 3. Update deployment target in project.pbxproj ===
+      const pbxprojPath = path.join(platformProjectRoot, 'DopamineDetoxSelfControl.xcodeproj', 'project.pbxproj');
+      if (fs.existsSync(pbxprojPath)) {
+        let pbxprojContent = fs.readFileSync(pbxprojPath, 'utf-8');
+        const originalContent = pbxprojContent;
+        
+        // Update all IPHONEOS_DEPLOYMENT_TARGET to 16.0
+        pbxprojContent = pbxprojContent.replace(
+          /IPHONEOS_DEPLOYMENT_TARGET = [\d.]+;/g,
+          'IPHONEOS_DEPLOYMENT_TARGET = 16.0;'
+        );
+        
+        // === 4. Add Family Controls capability ===
+        // Find TargetAttributes section and add SystemCapabilities
+        if (!pbxprojContent.includes('com.apple.FamilyControls')) {
+          // Match pattern: "13B07F861A680F5B00A75B9A = {\n\t\t\t\t\t\tLastSwiftMigration = 1250;\n\t\t\t\t\t};"
+          const targetAttrPattern = /(\w{24} = \{\s*\n\s*)(LastSwiftMigration = \d+;)(\s*\n\s*\};)/;
+          const match = pbxprojContent.match(targetAttrPattern);
+          
+          if (match) {
+            const replacement = `${match[1]}${match[2]}
+						SystemCapabilities = {
+							com.apple.FamilyControls = {
+								enabled = 1;
+							};
+						};${match[3]}`;
+            
+            pbxprojContent = pbxprojContent.replace(targetAttrPattern, replacement);
+            console.log('✅ Added Family Controls capability to project.pbxproj');
+          }
+        }
+        
+        if (pbxprojContent !== originalContent) {
+          fs.writeFileSync(pbxprojPath, pbxprojContent);
+          console.log('✅ Updated project.pbxproj');
         }
       }
       

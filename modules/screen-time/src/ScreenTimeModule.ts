@@ -26,12 +26,12 @@ interface ScreenTimeModuleInterface {
   removeDeviceActivitySchedule(scheduleId: string): Promise<boolean>;
 }
 
-const { ScreenTimeModule: NativeScreenTimeModule } = NativeModules;
+const NativeScreenTimeModule = NativeModules.ScreenTimeModule;
 
-// Fallback implementation for development
+// Fallback implementation for when native module is not available
 const fallbackScreenTimeModule: ScreenTimeModuleInterface = {
   async requestAuthorization() {
-    console.warn('ScreenTimeModule not available - using fallback');
+    console.warn('[ScreenTimeModule] Native module not available');
     return false;
   },
   async isAuthorized() {
@@ -77,7 +77,7 @@ const fallbackScreenTimeModule: ScreenTimeModuleInterface = {
   },
 };
 
-const ScreenTimeModule = (Platform.OS === 'ios' && NativeScreenTimeModule) 
+const ScreenTimeModule = (Platform.OS === 'ios' && NativeScreenTimeModule)
   ? (NativeScreenTimeModule as ScreenTimeModuleInterface)
   : fallbackScreenTimeModule;
 

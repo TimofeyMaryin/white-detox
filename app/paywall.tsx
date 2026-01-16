@@ -1,21 +1,22 @@
 import { ThemedView } from '@/components/themed-view';
-import { Colors } from '@/constants/theme';
 import { ADAPTY_CONFIG } from '@/config/adapty';
+import { Colors } from '@/constants/theme';
 import adaptyService from '@/services/adapty-service';
 import analytics from '@/services/analytics';
-import { useRouter, useLocalSearchParams } from 'expo-router';
-import React, { useState, useEffect } from 'react';
-import { StyleSheet, View, ActivityIndicator } from 'react-native';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import React, { useEffect, useState } from 'react';
+import { ActivityIndicator, Image, StyleSheet, Text, View } from 'react-native';
 import { AdaptyPaywallView } from 'react-native-adapty';
 
 export default function PaywallScreen() {
   const router = useRouter();
-  const params = useLocalSearchParams<{ placement?: string }>();
+  const params = useLocalSearchParams<{ placement?: string; fromOnboarding?: string }>();
   const [paywall, setPaywall] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Determine placement ID
+  // Determine placement ID and if coming from onboarding
   const placementId = params.placement || ADAPTY_CONFIG.placements.paywall.main;
+  const isFromOnboarding = params.fromOnboarding === 'true';
 
   useEffect(() => {
     const loadPaywall = async () => {
@@ -74,7 +75,12 @@ export default function PaywallScreen() {
         
         // Close paywall if not cancelled
         if (purchaseResult.type !== 'user_cancelled') {
-          router.back();
+          // If coming from onboarding flow, go directly to main screen
+          if (isFromOnboarding) {
+            router.replace('/(tabs)');
+          } else {
+            router.back();
+          }
         }
       } catch (error) {
         console.error('Purchase error:', error);
@@ -86,12 +92,9 @@ export default function PaywallScreen() {
   };
 
   const handleCloseButtonPress = () => {
-    // Show offer paywall if closing main paywall
-    if (placementId === ADAPTY_CONFIG.placements.paywall.main) {
-      router.replace({
-        pathname: '/paywall',
-        params: { placement: ADAPTY_CONFIG.placements.paywall.offer },
-      });
+    // If coming from onboarding, go to main screen
+    if (isFromOnboarding) {
+      router.replace('/(tabs)');
     } else {
       router.back();
     }
@@ -108,7 +111,12 @@ export default function PaywallScreen() {
       console.error('Error refreshing profile after restore:', error);
     }
     
-    router.back();
+    // If coming from onboarding flow, go directly to main screen
+    if (isFromOnboarding) {
+      router.replace('/(tabs)');
+    } else {
+      router.back();
+    }
     // Return true to close paywall
     return true;
   };
@@ -117,7 +125,14 @@ export default function PaywallScreen() {
     return (
       <ThemedView style={styles.container}>
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={Colors.dark.primary} />
+          <Image
+            source={require('@/assets/images/icon.jpg')}
+            style={styles.loadingIcon}
+            resizeMode="cover"
+          />
+          <Text style={styles.loadingTitle}>Dopamine Detox</Text>
+          <Text style={styles.loadingSubtitle}>SELF CONTROL</Text>
+          <ActivityIndicator size="large" color={Colors.dark.primary} style={styles.loader} />
         </View>
       </ThemedView>
     );
@@ -127,11 +142,40 @@ export default function PaywallScreen() {
     <ThemedView style={styles.container}>
       <AdaptyPaywallView
         paywall={paywall}
-        onPurchaseCompleted={handlePurchaseCompleted}
-        onCloseButtonPress={handleCloseButtonPress}
-        onRestoreCompleted={handleRestoreCompleted}
-        onPaywallShown={async () => {
-          // Log paywall shown (already logged in useEffect, but this is for Adapty analytics)
+        onPurchaseCompleted={(result: any, product: any) => {
+          console.log('[Paywall] onPurchaseCompleted:', result, product);
+          return handlePurchaseCompleted(result, product);
+        }}
+        onCloseButtonPress={() => {
+          console.log('[Paywall] onCloseButtonPress triggered!');
+          return handleCloseButtonPress();
+        }}
+        onRestoreCompleted={(profile: any) => {
+          console.log('[Paywall] onRestoreCompleted triggered!', profile);
+          handleRestoreCompleted();
+          return true;
+        }}
+        onCustomAction={(actionId: string) => {
+          console.log('[Paywall] onCustomAction triggered! actionId:', actionId);
+          // Handle custom action to navigate to pw_offer
+          if (actionId === 'pw_offer') {
+            console.log('[Paywall] Navigating to pw_offer...');
+            router.replace({
+              pathname: '/paywall',
+              params: {
+                placement: ADAPTY_CONFIG.placements.paywall.offer,
+                fromOnboarding: isFromOnboarding ? 'true' : undefined,
+              },
+            });
+            return true; // Close current paywall
+          }
+          return false;
+        }}
+        onUrlPress={(url: string) => {
+          console.log('[Paywall] onUrlPress:', url);
+        }}
+        onPaywallShown={() => {
+          console.log('[Paywall] onPaywallShown triggered!');
         }}
         style={styles.paywallView}
       />
@@ -148,6 +192,29 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  loadingIcon: {
+    width: 120,
+    height: 120,
+    borderRadius: 28,
+    marginBottom: 24,
+  },
+  loadingTitle: {
+    fontSize: 28,
+    fontWeight: '700',
+    color: '#FFFFFF',
+    textAlign: 'center',
+  },
+  loadingSubtitle: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: Colors.dark.primary,
+    textAlign: 'center',
+    marginTop: 4,
+    letterSpacing: 3,
+  },
+  loader: {
+    marginTop: 40,
   },
   paywallView: {
     flex: 1,

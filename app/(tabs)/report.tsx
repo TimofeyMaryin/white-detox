@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, ScrollView, View, TouchableOpacity, Alert, AppState } from 'react-native';
+import { StyleSheet, ScrollView, View, TouchableOpacity, AppState } from 'react-native';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Colors } from '@/constants/theme';
@@ -9,6 +9,7 @@ import { useBlocker } from '@/hooks/use-blocker';
 import { ScreenTimeChart } from '@/components/screen-time-chart';
 import { useRouter } from 'expo-router';
 import adaptyService from '@/services/adapty-service';
+import { ADAPTY_CONFIG } from '@/config/adapty';
 
 type TimePeriod = 'Day' | 'Week' | 'Month';
 
@@ -206,27 +207,15 @@ export default function ReportScreen() {
               ]}
               onPress={() => {
                 if (isDisabled) {
-                  Alert.alert(
-                    'Premium Required',
-                    'Week and Month statistics are available only for premium users.',
-                    [
-                      { text: 'Cancel', style: 'cancel' },
-                      {
-                        text: 'Get Premium',
-                        onPress: () => {
-                          router.push({
-                            pathname: '/paywall',
-                            params: { placement: 'pw_main' },
-                          });
-                        },
-                      },
-                    ]
-                  );
+                  // Open paywall directly (same as after onboarding)
+                  router.push({
+                    pathname: '/paywall',
+                    params: { placement: ADAPTY_CONFIG.placements.paywall.main },
+                  });
                 } else {
                   setSelectedPeriod(period);
                 }
               }}
-              disabled={isDisabled}
             >
               <ThemedText
                 style={[

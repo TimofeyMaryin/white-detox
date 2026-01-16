@@ -1,6 +1,6 @@
 {
   "platforms": ["ios"],
   "ios": {
-    "modules": ["ScreenTimeModule"]
+    "podspecPath": "./ios/ScreenTimeModule.podspec"
   }
 }

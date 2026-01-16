@@ -3,54 +3,36 @@ import FamilyControls
 import ManagedSettings
 import DeviceActivity
 import React
-
-// Import the global selection from FamilyActivityPickerModule
-// This is defined in FamilyActivityPickerModule.swift
-// Note: For Expo Modules API, both modules will be compiled into the same
-// Xcode project, so the global variable will be accessible across modules
+import FamilyActivityPickerModule
 
 @objc(ScreenTimeModule)
-class ScreenTimeModule: NSObject {
+public class ScreenTimeModule: NSObject {
   
-  @objc static func requiresMainQueueSetup() -> Bool {
+  @objc public static func requiresMainQueueSetup() -> Bool {
     return true
   }
   
   @objc func requestAuthorization(_ resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) {
-    Task {
+    Task { @MainActor in
       let authorizationCenter = AuthorizationCenter.shared
       
       do {
-        // Check current status first
         let currentStatus = authorizationCenter.authorizationStatus
         
         // If already approved, return success
         if currentStatus == .approved {
-          await MainActor.run {
-            resolve(true)
-          }
+          resolve(true)
           return
         }
         
-        // КРИТИЧЕСКИ ВАЖНО: используйте .individual для самоконтроля
-        // Это позволяет использовать Family Controls для всех аккаунтов, не только детских
+        // Request authorization with .individual for self-control apps
         try await authorizationCenter.requestAuthorization(for: .individual)
         
-        // Check status after request
         let newStatus = authorizationCenter.authorizationStatus
-        await MainActor.run {
-          // Return false instead of rejecting if user denied permission
-          // This allows the app to handle it gracefully without showing error
-          resolve(newStatus == .approved)
-        }
+        resolve(newStatus == .approved)
       } catch {
-        // If user denied or cancelled, return false instead of rejecting
-        // This prevents error messages when user simply doesn't grant permission
-        // Check status to see if it was denied
         let status = authorizationCenter.authorizationStatus
-        await MainActor.run {
-          resolve(status == .approved)
-        }
+        resolve(status == .approved)
       }
     }
   }
@@ -61,12 +43,7 @@ class ScreenTimeModule: NSObject {
       let status = authorizationCenter.authorizationStatus
       
       await MainActor.run {
-        switch status {
-        case .approved:
-          resolve(true)
-        default:
-          resolve(false)
-        }
+        resolve(status == .approved)
       }
     }
   }

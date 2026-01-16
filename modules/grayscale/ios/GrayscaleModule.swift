@@ -3,9 +3,9 @@ import UIKit
 import React
 
 @objc(GrayscaleModule)
-class GrayscaleModule: NSObject {
+public class GrayscaleModule: NSObject {
   
-  @objc static func requiresMainQueueSetup() -> Bool {
+  @objc public static func requiresMainQueueSetup() -> Bool {
     return true
   }
   

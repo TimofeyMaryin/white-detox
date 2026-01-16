@@ -100,26 +100,19 @@ export function usePermissions() {
       setPermissions((prev) => ({ ...prev, screenTime: 'checking' }));
       if (ScreenTimeModule && typeof ScreenTimeModule.requestAuthorization === 'function') {
         const granted = await ScreenTimeModule.requestAuthorization();
-        // Update status based on result
+        
         setPermissions((prev) => ({
           ...prev,
           screenTime: granted ? 'granted' : 'denied',
         }));
         
-        // Re-check permission status to ensure it's up to date
         await checkScreenTimePermission();
-        
         return granted;
       }
       setPermissions((prev) => ({ ...prev, screenTime: 'not-determined' }));
       return false;
     } catch (error: any) {
-      // Don't log errors if user simply denied permission
-      // Only log actual system errors
-      if (error?.code !== 'AUTHORIZATION_FAILED') {
-        console.error('Error requesting Screen Time permission:', error);
-      }
-      // Re-check permission status after error
+      console.error('Error requesting Screen Time permission:', error);
       await checkScreenTimePermission();
       return false;
     }

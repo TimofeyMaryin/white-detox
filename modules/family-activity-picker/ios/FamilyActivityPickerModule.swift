@@ -114,12 +114,12 @@ public class FamilyActivitySelectionStorage {
 }
 
 @objc(FamilyActivityPickerModule)
-class FamilyActivityPickerModule: NSObject {
+public class FamilyActivityPickerModule: NSObject {
   
   private var pickerCompletion: RCTPromiseResolveBlock?
   private var pickerReject: RCTPromiseRejectBlock?
   
-  @objc static func requiresMainQueueSetup() -> Bool {
+  @objc public static func requiresMainQueueSetup() -> Bool {
     return true
   }
   

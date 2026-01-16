@@ -8,7 +8,7 @@ import analytics from '@/services/analytics';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from 'expo-router';
 import React, { useState, useEffect } from 'react';
-import { Alert, Platform, StyleSheet, View, ActivityIndicator } from 'react-native';
+import { Alert, Platform, StyleSheet, View, ActivityIndicator, Image, Text } from 'react-native';
 import { AdaptyOnboardingView } from 'react-native-adapty';
 
 // Function to get store review module safely
@@ -139,9 +139,30 @@ export default function OnboardingScreen() {
         await AsyncStorage.setItem('@onboarding_completed', 'true');
         await completeOnboarding();
         await new Promise(resolve => setTimeout(resolve, 150));
-        router.replace('/(tabs)');
+        
+        // Check if post-onboarding paywall was already shown
+        const paywallShown = await AsyncStorage.getItem('@post_onboarding_paywall_shown');
+        
+        if (paywallShown !== 'true') {
+          // Mark paywall as shown
+          await AsyncStorage.setItem('@post_onboarding_paywall_shown', 'true');
+          // Navigate to paywall with special flag
+          // Show first paywall (pw_onboarding)
+          // The paywall has a button with action "pw_offer" that navigates to the second offer
+          router.replace({
+            pathname: '/paywall',
+            params: { 
+              placement: ADAPTY_CONFIG.placements.paywall.onboarding,
+              fromOnboarding: 'true'
+            },
+          });
+        } else {
+          // Paywall already shown, go to main screen
+          router.replace('/(tabs)');
+        }
       } catch (error) {
         console.error('Error completing onboarding:', error);
+        router.replace('/(tabs)');
       }
     })();
   };
@@ -176,7 +197,14 @@ export default function OnboardingScreen() {
     return (
       <ThemedView style={styles.container}>
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={Colors.dark.primary} />
+          <Image
+            source={require('@/assets/images/icon.jpg')}
+            style={styles.loadingIcon}
+            resizeMode="cover"
+          />
+          <Text style={styles.loadingTitle}>Dopamine Detox</Text>
+          <Text style={styles.loadingSubtitle}>SELF CONTROL</Text>
+          <ActivityIndicator size="large" color={Colors.dark.primary} style={styles.loader} />
         </View>
       </ThemedView>
     );
@@ -205,6 +233,29 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  loadingIcon: {
+    width: 120,
+    height: 120,
+    borderRadius: 28,
+    marginBottom: 24,
+  },
+  loadingTitle: {
+    fontSize: 28,
+    fontWeight: '700',
+    color: '#FFFFFF',
+    textAlign: 'center',
+  },
+  loadingSubtitle: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: Colors.dark.primary,
+    textAlign: 'center',
+    marginTop: 4,
+    letterSpacing: 3,
+  },
+  loader: {
+    marginTop: 40,
   },
   onboardingView: {
     flex: 1,

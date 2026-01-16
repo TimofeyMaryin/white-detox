@@ -12,7 +12,14 @@
       "supportsTablet": false,
       "bundleIdentifier": "com.danielian.selfcontrol.dopaminedetox",
       "deploymentTarget": "17.6",
-      "category": "public.app-category.productivity"
+      "category": "public.app-category.productivity",
+      "googleServicesFile": "./GoogleService-Info.plist",
+      "entitlements": {
+        "com.apple.developer.family-controls": ["com.apple.developer.family-controls.authorization"]
+      },
+      "infoPlist": {
+        "NSFamilyControlsUsageDescription": "This app needs Family Controls access to block distracting apps and help you stay focused on what matters."
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -32,17 +39,15 @@
     },
     "plugins": [
       "expo-router",
+      "@react-native-firebase/app",
       "./plugins/with-ios-firebase-config.js",
       [
         "expo-splash-screen",
         {
           "image": "./assets/images/icon.jpg",
-          "imageWidth": 200,
+          "imageWidth": 180,
           "resizeMode": "contain",
-          "backgroundColor": "#ffffff",
-          "dark": {
-            "backgroundColor": "#000000"
-          }
+          "backgroundColor": "#000000"
         }
       ],
       [

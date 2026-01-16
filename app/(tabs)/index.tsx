@@ -9,7 +9,7 @@ import ScreenTimeModule from '@/modules/screen-time';
 import adaptyService from '@/services/adapty-service';
 import { router } from 'expo-router';
 import React, { useEffect, useState } from 'react';
-import { Alert, AppState, ScrollView, StyleSheet, Switch, TouchableOpacity, View } from 'react-native';
+import { Alert, AppState, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
 
 export default function HomeScreen() {
   const { state, startBlocking, stopBlocking, pauseBlocking, resumeBlocking, toggleGrayscale, schedules, deleteSchedule } = useBlocker();
@@ -264,55 +264,44 @@ export default function HomeScreen() {
         {/* Time Dial */}
         <TimeDial savedTime={state.savedTime} />
 
-        {/* Control Buttons */}
-        <View style={styles.controls}>
-          {!state.isBlocking ? (
-            <TouchableOpacity
-              style={[styles.button, styles.startButton, !hasActiveApps && styles.buttonDisabled]}
-              onPress={handleStartBlocking}
-              disabled={!hasActiveApps}
-            >
-              <IconSymbol name="play.fill" size={24} color="#000" />
-              <ThemedText style={styles.buttonText}>Start Blocking</ThemedText>
-            </TouchableOpacity>
-          ) : (
-            <>
-              {state.isPaused ? (
-                <TouchableOpacity
-                  style={[styles.button, styles.resumeButton]}
-                  onPress={handleResume}
-                >
-                  <IconSymbol name="play.fill" size={24} color="#000" />
-                  <ThemedText style={styles.buttonText}>Resume</ThemedText>
-                </TouchableOpacity>
-              ) : (
-                <>
-                  <TouchableOpacity
-                    style={[styles.button, styles.pauseButton]}
-                    onPress={handlePause}
-                  >
-                    <IconSymbol name="pause.fill" size={24} color="#000" />
-                    <ThemedText style={styles.buttonText}>Pause</ThemedText>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={[styles.button, styles.unlockButton]}
-                    onPress={handleTemporaryUnlock}
-                  >
-                    <IconSymbol name="lock.open.fill" size={24} color="#000" />
-                    <ThemedText style={styles.buttonText}>Temporary Unlock</ThemedText>
-                  </TouchableOpacity>
-                </>
-              )}
+        {/* Control Buttons - Only shown when blocking is active */}
+        {state.isBlocking && (
+          <View style={styles.controls}>
+            {state.isPaused ? (
               <TouchableOpacity
-                style={[styles.button, styles.stopButton]}
-                onPress={handleStopBlocking}
+                style={[styles.button, styles.resumeButton]}
+                onPress={handleResume}
               >
-                <IconSymbol name="stop.fill" size={24} color="#000" />
-                <ThemedText style={styles.buttonText}>Stop</ThemedText>
+                <IconSymbol name="play.fill" size={24} color="#000" />
+                <ThemedText style={styles.buttonText}>Resume</ThemedText>
               </TouchableOpacity>
-            </>
-          )}
-        </View>
+            ) : (
+              <>
+                <TouchableOpacity
+                  style={[styles.button, styles.pauseButton]}
+                  onPress={handlePause}
+                >
+                  <IconSymbol name="pause.fill" size={24} color="#000" />
+                  <ThemedText style={styles.buttonText}>Pause</ThemedText>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.button, styles.unlockButton]}
+                  onPress={handleTemporaryUnlock}
+                >
+                  <IconSymbol name="lock.open.fill" size={24} color="#000" />
+                  <ThemedText style={styles.buttonText}>Temporary Unlock</ThemedText>
+                </TouchableOpacity>
+              </>
+            )}
+            <TouchableOpacity
+              style={[styles.button, styles.stopButton]}
+              onPress={handleStopBlocking}
+            >
+              <IconSymbol name="stop.fill" size={24} color="#000" />
+              <ThemedText style={styles.buttonText}>Stop</ThemedText>
+            </TouchableOpacity>
+          </View>
+        )}
 
         {/* Schedule Management - Only one schedule allowed */}
         <View style={styles.section}>
@@ -339,51 +328,64 @@ export default function HomeScreen() {
           </ThemedText>
           {schedules.length > 0 ? (
             schedules.slice(0, 1).map((schedule) => (
-              <TouchableOpacity
-                key={schedule.id}
-                style={styles.scheduleItem}
-                onPress={() => router.push(`/modal?type=schedule&scheduleId=${schedule.id}`)}
-              >
-                <View style={styles.scheduleItemContent}>
-                  <ThemedText style={styles.scheduleName}>{schedule.name}</ThemedText>
-                  <ThemedText style={styles.scheduleTime}>
-                    {schedule.startTime} - {schedule.endTime}
-                  </ThemedText>
-                  {schedule.daysOfWeek.length > 0 && (
-                    <ThemedText style={styles.scheduleDays}>
-                      {schedule.daysOfWeek.map(d => ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][d]).join(', ')}
-                    </ThemedText>
-                  )}
-                  {schedule.apps.length > 0 ? (
-                    <ThemedText style={styles.scheduleApps}>
-                      {schedule.apps.length} app{schedule.apps.length !== 1 ? 's' : ''} selected
-                    </ThemedText>
-                  ) : (
-                    <ThemedText style={styles.scheduleAppsWarning}>
-                      No apps selected - please add apps to enable blocking
-                    </ThemedText>
-                  )}
-                </View>
+              <View key={schedule.id} style={styles.scheduleCard}>
                 <TouchableOpacity
-                  onPress={(e) => {
-                    e.stopPropagation();
-                    Alert.alert(
-                      'Delete Schedule',
-                      `Are you sure you want to delete "${schedule.name}"?`,
-                      [
-                        { text: 'Cancel', style: 'cancel' },
-                        {
-                          text: 'Delete',
-                          style: 'destructive',
-                          onPress: () => deleteSchedule(schedule.id),
-                        },
-                      ]
-                    );
-                  }}
+                  style={styles.scheduleItem}
+                  onPress={() => router.push(`/modal?type=schedule&scheduleId=${schedule.id}`)}
                 >
-                  <IconSymbol name="trash.fill" size={20} color="#FF3B30" />
+                  <View style={styles.scheduleItemContent}>
+                    <ThemedText style={styles.scheduleName}>{schedule.name}</ThemedText>
+                    <ThemedText style={styles.scheduleTime}>
+                      {schedule.startTime} - {schedule.endTime}
+                    </ThemedText>
+                    {schedule.daysOfWeek.length > 0 && (
+                      <ThemedText style={styles.scheduleDays}>
+                        {schedule.daysOfWeek.map(d => ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][d]).join(', ')}
+                      </ThemedText>
+                    )}
+                    {schedule.apps.length > 0 ? (
+                      <ThemedText style={styles.scheduleApps}>
+                        {schedule.apps.length} app{schedule.apps.length !== 1 ? 's' : ''} selected
+                      </ThemedText>
+                    ) : (
+                      <ThemedText style={styles.scheduleAppsWarning}>
+                        No apps selected - please add apps to enable blocking
+                      </ThemedText>
+                    )}
+                  </View>
+                  <TouchableOpacity
+                    onPress={(e) => {
+                      e.stopPropagation();
+                      Alert.alert(
+                        'Delete Schedule',
+                        `Are you sure you want to delete "${schedule.name}"?`,
+                        [
+                          { text: 'Cancel', style: 'cancel' },
+                          {
+                            text: 'Delete',
+                            style: 'destructive',
+                            onPress: () => deleteSchedule(schedule.id),
+                          },
+                        ]
+                      );
+                    }}
+                  >
+                    <IconSymbol name="trash.fill" size={20} color="#FF3B30" />
+                  </TouchableOpacity>
                 </TouchableOpacity>
-              </TouchableOpacity>
+                
+                {/* Play button to start blocking */}
+                {!state.isBlocking && (
+                  <TouchableOpacity
+                    style={[styles.playButton, schedule.apps.length === 0 && styles.playButtonDisabled]}
+                    onPress={handleStartBlocking}
+                    disabled={schedule.apps.length === 0}
+                  >
+                    <IconSymbol name="play.fill" size={20} color="#000" />
+                    <ThemedText style={styles.playButtonText}>Start Blocking</ThemedText>
+                  </TouchableOpacity>
+                )}
+              </View>
             ))
           ) : (
             <ThemedText style={styles.emptyState}>No schedule created yet. Tap + to create one.</ThemedText>
@@ -458,16 +460,19 @@ const styles = StyleSheet.create({
   addButton: {
     padding: 4,
   },
+  scheduleCard: {
+    backgroundColor: '#1a1a1a',
+    borderRadius: 12,
+    marginTop: 12,
+    borderWidth: 1,
+    borderColor: '#333333',
+    overflow: 'hidden',
+  },
   scheduleItem: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     padding: 12,
-    backgroundColor: '#1a1a1a',
-    borderRadius: 8,
-    marginBottom: 8,
-    borderWidth: 1,
-    borderColor: '#333333',
   },
   scheduleItemContent: {
     flex: 1,
@@ -505,5 +510,23 @@ const styles = StyleSheet.create({
     fontStyle: 'italic',
     textAlign: 'center',
     marginTop: 20,
+  },
+  playButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: Colors.dark.primary,
+    paddingVertical: 12,
+    gap: 8,
+    borderTopWidth: 1,
+    borderTopColor: '#333333',
+  },
+  playButtonDisabled: {
+    opacity: 0.5,
+  },
+  playButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#000',
   },
 });

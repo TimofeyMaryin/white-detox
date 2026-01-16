@@ -322,18 +322,14 @@ export default function SettingsScreen() {
             onPress={async () => {
               if (permissions.screenTime !== 'granted') {
                 const granted = await requestScreenTimePermission();
-                if (!granted) {
-                  // Show helpful message if permission was denied
+                if (granted) {
+                  Alert.alert('Success', 'Screen Time permission granted!');
+                } else if (__DEV__) {
+                  // Only show this message in development (likely simulator)
                   Alert.alert(
-                    'Screen Time Permission Required',
-                    'Screen Time permission is required to block apps. You can enable it in Settings > Screen Time.',
-                    [
-                      { text: 'Cancel', style: 'cancel' },
-                      {
-                        text: 'Open Settings',
-                        onPress: () => Linking.openSettings(),
-                      },
-                    ]
+                    'Permission Not Granted',
+                    'Family Controls API may not work on iOS Simulator. Please test on a real device.',
+                    [{ text: 'OK' }]
                   );
                 }
               } else {
