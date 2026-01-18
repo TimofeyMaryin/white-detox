@@ -5,7 +5,7 @@ import { ThemedView } from '@/components/themed-view';
 import { Colors } from '@/constants/theme';
 import { formatTimeShort } from '@/utils/timeFormatter';
 import ScreenTimeModule from '@/modules/screen-time';
-import { useBlocker } from '@/hooks/use-blocker';
+import { useBlocker } from '@/contexts/blocker-context';
 import { ScreenTimeChart } from '@/components/screen-time-chart';
 import { useRouter } from 'expo-router';
 import adaptyService from '@/services/adapty-service';
@@ -80,6 +80,7 @@ export default function ReportScreen() {
   };
 
   const loadScreenTimeData = async () => {
+    console.log('[DETOX_DEBUG] ReportScreen.loadScreenTimeData: Called for period:', selectedPeriod);
     setIsLoading(true);
     // Сбрасываем данные перед загрузкой
     setStats({
@@ -92,10 +93,12 @@ export default function ReportScreen() {
     try {
       if (ScreenTimeModule && typeof ScreenTimeModule.isAuthorized === 'function') {
         const isAuthorized = await ScreenTimeModule.isAuthorized();
+        console.log('[DETOX_DEBUG] ReportScreen.loadScreenTimeData: isAuthorized:', isAuthorized);
         if (isAuthorized) {
           // Использовать новый метод для получения данных за период
           if (typeof ScreenTimeModule.getScreenTimeUsageForPeriod === 'function') {
             const usage = await ScreenTimeModule.getScreenTimeUsageForPeriod(selectedPeriod);
+            console.log('[DETOX_DEBUG] ReportScreen.loadScreenTimeData: Usage data:', JSON.stringify(usage, null, 2));
             setStats({
               screenTime: usage.totalTime || 0,
               pickups: usage.pickups || 0,
@@ -105,6 +108,7 @@ export default function ReportScreen() {
           } else {
             // Fallback на старый метод для дня
             const usage = await ScreenTimeModule.getScreenTimeUsage();
+            console.log('[DETOX_DEBUG] ReportScreen.loadScreenTimeData: Legacy usage data:', JSON.stringify(usage, null, 2));
             setStats({
               screenTime: usage.totalTime || 0,
               pickups: usage.pickups || 0,
@@ -113,6 +117,7 @@ export default function ReportScreen() {
             });
           }
         } else {
+          console.log('[DETOX_DEBUG] ReportScreen.loadScreenTimeData: Not authorized');
           // Не авторизован - пустые данные
           setStats({
             screenTime: 0,
@@ -122,6 +127,7 @@ export default function ReportScreen() {
           });
         }
       } else {
+        console.log('[DETOX_DEBUG] ReportScreen.loadScreenTimeData: Module not available');
         // Модуль недоступен - пустые данные
         setStats({
           screenTime: 0,
@@ -131,7 +137,7 @@ export default function ReportScreen() {
         });
       }
     } catch (error) {
-      console.error('Error loading screen time data:', error);
+      console.error('[DETOX_DEBUG] ReportScreen.loadScreenTimeData: Error:', error);
       // При ошибке - пустые данные
       setStats({
         screenTime: 0,
@@ -233,16 +239,36 @@ export default function ReportScreen() {
       </View>
 
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.content}>
+        {/* Time Saved Card - from blocking */}
+        <View style={styles.card}>
+          <ThemedText style={styles.cardTitle}>TIME SAVED</ThemedText>
+          <ThemedText style={styles.dateRange}>Total time saved by blocking apps</ThemedText>
+          <View style={styles.summaryRow}>
+            <View style={styles.summaryItem}>
+              <ThemedText style={[styles.summaryValue, styles.timeSavedValue]}>
+                {formatTimeShort(state.savedTime)}
+              </ThemedText>
+              <ThemedText style={styles.summaryLabel}>BLOCKED TIME</ThemedText>
+            </View>
+            <View style={styles.summaryItem}>
+              <ThemedText style={styles.summaryValue}>
+                {state.isBlocking ? '🟢 Active' : '⚪ Inactive'}
+              </ThemedText>
+              <ThemedText style={styles.summaryLabel}>STATUS</ThemedText>
+            </View>
+          </View>
+        </View>
+
         {/* Summary Card */}
         <View style={styles.card}>
-          <ThemedText style={styles.cardTitle}>SUMMARY</ThemedText>
+          <ThemedText style={styles.cardTitle}>SCREEN TIME</ThemedText>
           <ThemedText style={styles.dateRange}>{getDateRangeText()}</ThemedText>
           <View style={styles.summaryRow}>
             <View style={styles.summaryItem}>
               <ThemedText style={styles.summaryValue}>
                 {stats.screenTime ? formatTimeShort(stats.screenTime) : '0m'}
               </ThemedText>
-              <ThemedText style={styles.summaryLabel}>SCREEN TIME</ThemedText>
+              <ThemedText style={styles.summaryLabel}>TOTAL USAGE</ThemedText>
             </View>
             <View style={styles.summaryItem}>
               <ThemedText style={styles.summaryValue}>
@@ -256,6 +282,9 @@ export default function ReportScreen() {
               Apple only provides data from the last 31 days.
             </ThemedText>
           )}
+          <ThemedText style={styles.note}>
+            Note: Screen Time data from Apple updates periodically, not in real-time.
+          </ThemedText>
         </View>
 
         {/* Screen Time Per Day Chart - Only for Week and Month */}
@@ -455,5 +484,8 @@ const styles = StyleSheet.create({
     opacity: 0.7,
     textAlign: 'center',
     padding: 20,
+  },
+  timeSavedValue: {
+    color: Colors.dark.primary,
   },
 });
