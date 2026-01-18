@@ -1,5 +1,6 @@
-import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode, useRef } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { AppState, AppStateStatus } from 'react-native';
 import { BlockerState, BlockerSchedule } from '@/types/blocker';
 import ScreenTimeModule from '@/modules/screen-time';
 import FamilyActivityPickerModule from '@/modules/family-activity-picker';
@@ -23,6 +24,14 @@ interface BlockerContextType {
 
 const BlockerContext = createContext<BlockerContextType | null>(null);
 
+// Helper function to calculate elapsed time from startedAt
+const calculateElapsedTime = (startedAt: number | undefined, accumulatedTime: number = 0): number => {
+  if (!startedAt) return accumulatedTime;
+  const now = Date.now();
+  const elapsed = Math.floor((now - startedAt) / 1000);
+  return accumulatedTime + elapsed;
+};
+
 export function BlockerProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<BlockerState>({
     isBlocking: false,
@@ -31,21 +40,51 @@ export function BlockerProvider({ children }: { children: ReactNode }) {
   });
   const [schedules, setSchedules] = useState<BlockerSchedule[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const appStateRef = useRef(AppState.currentState);
 
   // Load state from storage
   useEffect(() => {
     loadState();
   }, []);
 
-  // Update saved time every second when blocking
+  // Handle app state changes (foreground/background)
+  useEffect(() => {
+    const handleAppStateChange = (nextAppState: AppStateStatus) => {
+      console.log('[DETOX_DEBUG] AppState changed:', appStateRef.current, '->', nextAppState);
+      
+      // When app comes to foreground, recalculate elapsed time
+      if (appStateRef.current.match(/inactive|background/) && nextAppState === 'active') {
+        setState((prev) => {
+          if (prev.isBlocking && !prev.isPaused && prev.startedAt) {
+            const newSavedTime = calculateElapsedTime(prev.startedAt, prev.accumulatedTime);
+            console.log('[DETOX_DEBUG] Recalculated savedTime on foreground:', newSavedTime);
+            return { ...prev, savedTime: newSavedTime };
+          }
+          return prev;
+        });
+      }
+      
+      appStateRef.current = nextAppState;
+    };
+
+    const subscription = AppState.addEventListener('change', handleAppStateChange);
+    return () => subscription.remove();
+  }, []);
+
+  // Update saved time every second when blocking (only updates display, real time is calculated from startedAt)
   useEffect(() => {
     if (!state.isBlocking || state.isPaused) return;
 
     const interval = setInterval(() => {
-      setState((prev) => ({
-        ...prev,
-        savedTime: prev.savedTime + 1,
-      }));
+      setState((prev) => {
+        // Calculate real elapsed time from startedAt
+        if (prev.startedAt) {
+          const newSavedTime = calculateElapsedTime(prev.startedAt, prev.accumulatedTime);
+          return { ...prev, savedTime: newSavedTime };
+        }
+        // Fallback to incrementing (shouldn't happen with new logic)
+        return { ...prev, savedTime: prev.savedTime + 1 };
+      });
     }, 1000);
 
     return () => clearInterval(interval);
@@ -63,8 +102,16 @@ export function BlockerProvider({ children }: { children: ReactNode }) {
       console.log('[DETOX_DEBUG] loadState: Raw savedSchedules:', savedSchedules);
 
       if (savedState) {
-        const parsed = JSON.parse(savedState);
+        const parsed: BlockerState = JSON.parse(savedState);
         console.log('[DETOX_DEBUG] loadState: Parsed state:', parsed);
+        
+        // If blocking is active, recalculate elapsed time since app was closed
+        if (parsed.isBlocking && !parsed.isPaused && parsed.startedAt) {
+          const newSavedTime = calculateElapsedTime(parsed.startedAt, parsed.accumulatedTime);
+          console.log('[DETOX_DEBUG] loadState: Recalculated savedTime:', newSavedTime, 'from startedAt:', parsed.startedAt);
+          parsed.savedTime = newSavedTime;
+        }
+        
         setState(parsed);
       }
 
@@ -107,41 +154,68 @@ export function BlockerProvider({ children }: { children: ReactNode }) {
   };
 
   const startBlocking = useCallback(async () => {
+    const now = Date.now();
     const newState: BlockerState = {
       ...state,
       isBlocking: true,
       isPaused: false,
+      startedAt: now, // Record when blocking started
+      accumulatedTime: state.savedTime, // Keep any previously saved time
+      savedTime: state.savedTime, // Start from current saved time
     };
+    console.log('[DETOX_DEBUG] startBlocking: Starting with startedAt:', now);
     setState(newState);
     await AsyncStorage.setItem(BLOCKER_STATE_KEY, JSON.stringify(newState));
   }, [state]);
 
   const stopBlocking = useCallback(async () => {
+    // Calculate final saved time before stopping
+    const finalSavedTime = state.startedAt 
+      ? calculateElapsedTime(state.startedAt, state.accumulatedTime)
+      : state.savedTime;
+    
     const newState: BlockerState = {
       ...state,
       isBlocking: false,
       isPaused: false,
+      startedAt: undefined,
+      accumulatedTime: finalSavedTime, // Save accumulated time for next session
+      savedTime: finalSavedTime,
     };
+    console.log('[DETOX_DEBUG] stopBlocking: Final savedTime:', finalSavedTime);
     setState(newState);
     await AsyncStorage.setItem(BLOCKER_STATE_KEY, JSON.stringify(newState));
   }, [state]);
 
   const pauseBlocking = useCallback(async () => {
+    // Calculate time saved so far and store it
+    const currentSavedTime = state.startedAt 
+      ? calculateElapsedTime(state.startedAt, state.accumulatedTime)
+      : state.savedTime;
+    
     const newState: BlockerState = {
       ...state,
       isPaused: true,
       pausedAt: new Date(),
+      startedAt: undefined, // Stop the timer
+      accumulatedTime: currentSavedTime, // Store accumulated time
+      savedTime: currentSavedTime,
     };
+    console.log('[DETOX_DEBUG] pauseBlocking: Paused with savedTime:', currentSavedTime);
     setState(newState);
     await AsyncStorage.setItem(BLOCKER_STATE_KEY, JSON.stringify(newState));
   }, [state]);
 
   const resumeBlocking = useCallback(async () => {
+    const now = Date.now();
     const newState: BlockerState = {
       ...state,
       isPaused: false,
       pausedAt: undefined,
+      startedAt: now, // Restart the timer
+      // accumulatedTime stays the same - we continue counting from where we left off
     };
+    console.log('[DETOX_DEBUG] resumeBlocking: Resumed with startedAt:', now, 'accumulatedTime:', state.accumulatedTime);
     setState(newState);
     await AsyncStorage.setItem(BLOCKER_STATE_KEY, JSON.stringify(newState));
   }, [state]);

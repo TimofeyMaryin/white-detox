@@ -15,6 +15,8 @@ export interface BlockerState {
   isPaused: boolean;
   pausedAt?: Date;
   currentScheduleId?: string;
-  savedTime: number; // in seconds
+  savedTime: number; // in seconds - total saved time (accumulated)
+  startedAt?: number; // timestamp when blocking started (for calculating elapsed time)
+  accumulatedTime?: number; // time accumulated before current session (for pause/resume)
 }
 
