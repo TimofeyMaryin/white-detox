@@ -4,19 +4,25 @@ import { TimeDial } from '@/components/time-dial';
 import { TopBar } from '@/components/top-bar';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { Colors } from '@/constants/theme';
-import { useBlocker } from '@/hooks/use-blocker';
+import { useBlocker } from '@/contexts/blocker-context';
 import ScreenTimeModule from '@/modules/screen-time';
+import FamilyActivityPickerModule from '@/modules/family-activity-picker';
 import adaptyService from '@/services/adapty-service';
 import { router } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { Alert, AppState, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
 
 export default function HomeScreen() {
-  const { state, startBlocking, stopBlocking, pauseBlocking, resumeBlocking, schedules, deleteSchedule } = useBlocker();
+  const { state, startBlocking, stopBlocking, schedules, deleteSchedule } = useBlocker();
   const [hasPremium, setHasPremium] = useState(false);
+
+  console.log('[DETOX_DEBUG] HomeScreen: Rendering');
+  console.log('[DETOX_DEBUG] HomeScreen: schedules count:', schedules.length);
+  console.log('[DETOX_DEBUG] HomeScreen: schedules:', JSON.stringify(schedules, null, 2));
 
   // Check if there are any active apps to block
   const hasActiveApps = schedules.some(schedule => schedule.apps.length > 0 && schedule.isActive);
+  console.log('[DETOX_DEBUG] HomeScreen: hasActiveApps:', hasActiveApps);
 
   // Check premium status
   useEffect(() => {
@@ -58,8 +64,13 @@ export default function HomeScreen() {
   }, []);
 
   const handleStartBlocking = async () => {
+    console.log('[DETOX_DEBUG] HomeScreen.handleStartBlocking: Called');
+    console.log('[DETOX_DEBUG] HomeScreen.handleStartBlocking: hasActiveApps:', hasActiveApps);
+    console.log('[DETOX_DEBUG] HomeScreen.handleStartBlocking: schedules:', JSON.stringify(schedules, null, 2));
+    
     // Check if there are active apps to block
     if (!hasActiveApps) {
+      console.log('[DETOX_DEBUG] HomeScreen.handleStartBlocking: No active apps, showing alert');
       Alert.alert(
         'No Apps Selected',
         'Please create a blocking schedule with at least one app before starting the timer.',
@@ -68,13 +79,30 @@ export default function HomeScreen() {
       return;
     }
 
+    // Get the active schedule
+    const activeSchedule = schedules.find(s => s.apps.length > 0 && s.isActive);
+    console.log('[DETOX_DEBUG] HomeScreen.handleStartBlocking: activeSchedule:', JSON.stringify(activeSchedule, null, 2));
+    if (!activeSchedule) {
+      console.log('[DETOX_DEBUG] HomeScreen.handleStartBlocking: No active schedule found');
+      Alert.alert(
+        'No Active Schedule',
+        'Please create an active schedule with apps to block.',
+        [{ text: 'OK' }]
+      );
+      return;
+    }
+
     try {
       // Check if native module is available
       if (ScreenTimeModule && typeof ScreenTimeModule.isAuthorized === 'function') {
+        console.log('[DETOX_DEBUG] HomeScreen.handleStartBlocking: Checking authorization');
         const isAuthorized = await ScreenTimeModule.isAuthorized();
+        console.log('[DETOX_DEBUG] HomeScreen.handleStartBlocking: isAuthorized:', isAuthorized);
         if (!isAuthorized) {
           // Request authorization
+          console.log('[DETOX_DEBUG] HomeScreen.handleStartBlocking: Requesting authorization');
           const authorized = await ScreenTimeModule.requestAuthorization();
+          console.log('[DETOX_DEBUG] HomeScreen.handleStartBlocking: Authorization result:', authorized);
           if (!authorized) {
             Alert.alert(
               'Authorization Required',
@@ -85,25 +113,57 @@ export default function HomeScreen() {
           }
         }
 
+        // First, try to load the saved selection for this schedule
+        // This restores the globalActivitySelection from cached storage
+        let loadedApps: string[] = [];
+        if (FamilyActivityPickerModule && typeof FamilyActivityPickerModule.loadSavedSelectionForScheduleId === 'function') {
+          try {
+            console.log('[DETOX_DEBUG] HomeScreen.handleStartBlocking: Loading saved selection for schedule:', activeSchedule.id);
+            loadedApps = await FamilyActivityPickerModule.loadSavedSelectionForScheduleId(activeSchedule.id);
+            console.log('[DETOX_DEBUG] HomeScreen.handleStartBlocking: Loaded apps:', loadedApps);
+          } catch (loadError) {
+            console.warn('[DETOX_DEBUG] HomeScreen.handleStartBlocking: Could not load saved selection:', loadError);
+          }
+        }
+
+        // Check if tokens were lost after app restart
+        // schedule.apps has identifiers but native tokens are gone
+        console.log('[DETOX_DEBUG] HomeScreen.handleStartBlocking: activeSchedule.apps.length:', activeSchedule.apps.length, 'loadedApps.length:', loadedApps.length);
+        if (activeSchedule.apps.length > 0 && loadedApps.length === 0) {
+          console.log('[DETOX_DEBUG] HomeScreen.handleStartBlocking: Tokens lost after restart, showing alert');
+          Alert.alert(
+            'Apps Need Re-selection',
+            'Due to iOS security restrictions, app tokens are lost after app restart. Please re-select the apps you want to block.',
+            [
+              { text: 'Cancel', style: 'cancel' },
+              {
+                text: 'Select Apps',
+                onPress: () => {
+                  router.push(`/modal?type=schedule&scheduleId=${activeSchedule.id}`);
+                },
+              },
+            ]
+          );
+          return;
+        }
+
         // Block apps using ScreenTime API
-        // Note: blockApps() uses globalActivitySelection which is set when user selects apps via FamilyActivityPicker
-        // The parameter is not used but required for the method signature
+        // The selection is now loaded into globalActivitySelection
+        console.log('[DETOX_DEBUG] HomeScreen.handleStartBlocking: Calling ScreenTimeModule.blockApps');
         const blocked = await ScreenTimeModule.blockApps([]);
+        console.log('[DETOX_DEBUG] HomeScreen.handleStartBlocking: blockApps result:', blocked);
         
         if (!blocked) {
+          console.log('[DETOX_DEBUG] HomeScreen.handleStartBlocking: Blocking failed');
           Alert.alert(
             'Blocking Failed',
-            'Could not block apps. Please make sure you have selected apps in your schedule recently.',
+            'Could not block apps. Please make sure you have selected apps in your schedule.',
             [
               { text: 'OK' },
               {
                 text: 'Select Apps',
                 onPress: () => {
-                  if (schedules.length > 0) {
-                    router.push(`/modal?type=schedule&scheduleId=${schedules[0].id}`);
-                  } else {
-                    router.push('/modal?type=schedule');
-                  }
+                  router.push(`/modal?type=schedule&scheduleId=${activeSchedule.id}`);
                 },
               },
             ]
@@ -113,6 +173,7 @@ export default function HomeScreen() {
       }
       
       // Start blocking state
+      console.log('[DETOX_DEBUG] HomeScreen.handleStartBlocking: Starting blocking state');
       startBlocking();
     } catch (error: any) {
       console.error('Error starting blocking:', error);
@@ -186,38 +247,6 @@ export default function HomeScreen() {
     );
   };
 
-  const handlePause = () => {
-    pauseBlocking();
-  };
-
-  const handleResume = () => {
-    resumeBlocking();
-  };
-
-  const handleTemporaryUnlock = async () => {
-    Alert.alert(
-      'Temporary Unlock',
-      'Do you want to temporarily unlock apps?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Unlock',
-          onPress: async () => {
-            try {
-              if (ScreenTimeModule && typeof ScreenTimeModule.unblockApps === 'function') {
-                await ScreenTimeModule.unblockApps([]);
-              }
-              pauseBlocking();
-            } catch (error) {
-              console.error('Error unlocking apps:', error);
-              pauseBlocking();
-            }
-          },
-        },
-      ]
-    );
-  };
-
   const handlePremiumPress = () => {
     router.push({
       pathname: '/paywall',
@@ -236,32 +265,6 @@ export default function HomeScreen() {
         {/* Control Buttons - Only shown when blocking is active */}
         {state.isBlocking && (
           <View style={styles.controls}>
-            {state.isPaused ? (
-              <TouchableOpacity
-                style={[styles.button, styles.resumeButton]}
-                onPress={handleResume}
-              >
-                <IconSymbol name="play.fill" size={24} color="#000" />
-                <ThemedText style={styles.buttonText}>Resume</ThemedText>
-              </TouchableOpacity>
-            ) : (
-              <>
-                <TouchableOpacity
-                  style={[styles.button, styles.pauseButton]}
-                  onPress={handlePause}
-                >
-                  <IconSymbol name="pause.fill" size={24} color="#000" />
-                  <ThemedText style={styles.buttonText}>Pause</ThemedText>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[styles.button, styles.unlockButton]}
-                  onPress={handleTemporaryUnlock}
-                >
-                  <IconSymbol name="lock.open.fill" size={24} color="#000" />
-                  <ThemedText style={styles.buttonText}>Temporary Unlock</ThemedText>
-                </TouchableOpacity>
-              </>
-            )}
             <TouchableOpacity
               style={[styles.button, styles.stopButton]}
               onPress={handleStopBlocking}
@@ -395,15 +398,6 @@ const styles = StyleSheet.create({
   },
   buttonDisabled: {
     opacity: 0.5,
-  },
-  pauseButton: {
-    backgroundColor: '#FFA500',
-  },
-  resumeButton: {
-    backgroundColor: Colors.dark.primary,
-  },
-  unlockButton: {
-    backgroundColor: '#4CAF50',
   },
   stopButton: {
     backgroundColor: '#FF3B30',

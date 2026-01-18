@@ -125,12 +125,16 @@ public class ScreenTimeModule: NSObject {
         return
       }
       
-      // Note: Selection should be set via globalActivitySelection by FamilyActivityPickerModule
-      // If not available, blocking won't work - user needs to select apps first
+      // Try to load selection for the specific schedule first
+      // This ensures we use the correct selection even after app restart
+      let storedSelection: FamilyActivitySelection? = scheduleId.isEmpty
+        ? FamilyActivitySelectionStorage.shared.loadGlobalSelection()
+        : FamilyActivitySelectionStorage.shared.loadSelection(forScheduleId: scheduleId)
       
-      // Get the stored ActivitySelection from global variable
-      // This is set by FamilyActivityPickerModule when user selects apps
-      guard let selection = globalActivitySelection else {
+      // Use stored selection or fallback to global
+      let selection = storedSelection ?? globalActivitySelection
+      
+      guard let selection = selection else {
         await MainActor.run {
           reject("NO_SELECTION", "No apps selected. Please select apps using FamilyActivityPicker first.", nil)
         }
@@ -150,6 +154,9 @@ public class ScreenTimeModule: NSObject {
         return
       }
       
+      // Log what we're blocking
+      print("[ScreenTimeModule] Blocking \(applicationTokens.count) apps and \(categoryTokens.count) categories for schedule \(scheduleId)")
+      
       // Use ManagedSettings to block the applications
       // This must be done on the main thread
       await MainActor.run {
@@ -157,19 +164,27 @@ public class ScreenTimeModule: NSObject {
         let storeName = scheduleId.isEmpty ? "main" : "schedule_\(scheduleId)"
         let store = ManagedSettingsStore(named: ManagedSettingsStore.Name(storeName))
         
+        // Clear previous settings first
+        store.clearAllSettings()
+        
         // Configure shield to block the selected applications
         // Set both applications and categories
         if !applicationTokens.isEmpty {
           store.shield.applications = applicationTokens
+          print("[ScreenTimeModule] Set shield.applications with \(applicationTokens.count) apps")
         }
         
         // Block entire categories (e.g., Games, Social, etc.)
+        // IMPORTANT: Categories block all apps within that category
         if !categoryTokens.isEmpty {
           store.shield.applicationCategories = .specific(categoryTokens)
+          // Also block web domains in these categories
+          store.shield.webDomainCategories = .specific(categoryTokens)
+          print("[ScreenTimeModule] Set shield.applicationCategories with \(categoryTokens.count) categories")
         }
         
-        // Note: Selection persistence is handled by FamilyActivityPickerModule
-        // ManagedSettingsStore automatically persists the tokens
+        // Update global selection for consistency
+        globalActivitySelection = selection
         
         resolve(true)
       }

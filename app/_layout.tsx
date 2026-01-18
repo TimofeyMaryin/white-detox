@@ -10,6 +10,7 @@ import { useEffect, useState } from 'react';
 
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useOnboarding } from '@/hooks/use-onboarding';
+import { BlockerProvider } from '@/contexts/blocker-context';
 import adaptyService from '@/services/adapty-service';
 import appsflyerService from '@/services/appsflyer-service';
 
@@ -167,8 +168,10 @@ export default function RootLayout() {
 
   return (
     <ThemeProvider value={CustomDarkTheme}>
-      <RootLayoutNav />
-      <StatusBar style="light" />
+      <BlockerProvider>
+        <RootLayoutNav />
+        <StatusBar style="light" />
+      </BlockerProvider>
     </ThemeProvider>
   );
 }

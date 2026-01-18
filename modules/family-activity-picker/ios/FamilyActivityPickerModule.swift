@@ -70,22 +70,15 @@ public class FamilyActivitySelectionStorage {
     // Check if selection was saved previously
     let key = "\(SAVED_SELECTION_KEY)_\(scheduleId)"
     guard userDefaults.bool(forKey: "\(key)_exists") else {
+      // No saved selection for this schedule - return nil
+      // DO NOT fallback to globalActivitySelection as it may contain data from another schedule
       return nil
     }
     
-    // Try to restore from global selection if available
-    // Note: After app restart, tokens in ManagedSettingsStore persist but can't be read
-    // This is a limitation of iOS - tokens are security-sensitive and can't be serialized
-    // However, blocking will continue to work because ManagedSettingsStore preserves the settings
-    if let global = globalActivitySelection, 
-       (!global.applicationTokens.isEmpty || !global.categoryTokens.isEmpty) {
-      cachedSelections[scheduleId] = global
-      return global
-    }
-    
-    // If we have a flag but no tokens, it means app was restarted
+    // If we have a flag but no tokens in cache, it means app was restarted
     // ManagedSettingsStore still has the tokens for blocking, but we can't restore the selection
     // User will need to re-select apps to modify the schedule
+    // DO NOT use globalActivitySelection as fallback - it may be from a different schedule
     print("Selection exists for schedule \(scheduleId) but tokens cannot be restored after app restart")
     return nil
   }
@@ -114,6 +107,26 @@ public class FamilyActivitySelectionStorage {
         // Note: We can't restore the tokens, but blocking is still active
       }
     }
+  }
+  
+  // Clear selection for a specific schedule ID
+  public func clearSelection(forScheduleId scheduleId: String) {
+    // Remove from memory cache
+    cachedSelections.removeValue(forKey: scheduleId)
+    
+    // Remove flags from UserDefaults
+    let key = "\(SAVED_SELECTION_KEY)_\(scheduleId)"
+    userDefaults.removeObject(forKey: "\(key)_count")
+    userDefaults.removeObject(forKey: "\(key)_exists")
+    userDefaults.synchronize()
+    
+    print("Cleared selection for schedule \(scheduleId)")
+  }
+  
+  // Clear global selection
+  public func clearGlobalSelection() {
+    clearSelection(forScheduleId: "global")
+    globalActivitySelection = nil
   }
 }
 
@@ -216,9 +229,16 @@ public class FamilyActivityPickerModule: NSObject {
       }
       
       // Load previously saved selection for this schedule
-      let savedSelection = scheduleId.isEmpty 
-        ? FamilyActivitySelectionStorage.shared.loadGlobalSelection()
-        : FamilyActivitySelectionStorage.shared.loadSelection(forScheduleId: scheduleId)
+      // IMPORTANT: Only use saved selection for THIS specific schedule
+      // Do NOT fallback to globalActivitySelection for new schedules
+      let savedSelection: FamilyActivitySelection?
+      if scheduleId.isEmpty {
+        savedSelection = FamilyActivitySelectionStorage.shared.loadGlobalSelection()
+      } else {
+        // For specific schedule, only load its own selection
+        // This prevents showing old apps when creating a new schedule
+        savedSelection = FamilyActivitySelectionStorage.shared.loadSelection(forScheduleId: scheduleId)
+      }
       
       // Show the picker - it will handle authorization if needed
       await MainActor.run { [weak self] in
@@ -392,6 +412,72 @@ public class FamilyActivityPickerModule: NSObject {
       resolve([])
     }
   }
+  
+  @objc func clearSelectionForScheduleId(_ scheduleId: String, resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
+    DispatchQueue.main.async {
+      // Clear from storage
+      FamilyActivitySelectionStorage.shared.clearSelection(forScheduleId: scheduleId)
+      
+      // Clear global selection if it was for this schedule
+      globalActivitySelection = nil
+      
+      // Clear ManagedSettingsStore for this schedule
+      let storeName = scheduleId.isEmpty ? "main" : "schedule_\(scheduleId)"
+      let store = ManagedSettingsStore(named: ManagedSettingsStore.Name(storeName))
+      store.clearAllSettings()
+      
+      print("[FamilyActivityPickerModule] Cleared selection for schedule \(scheduleId)")
+      resolve(true)
+    }
+  }
+  
+  @objc func updateSelectionFromApps(_ scheduleId: String, appIdentifiers: [String], resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
+    // This method is called when user removes apps from the list in JS
+    // We need to update the cached selection to reflect the removal
+    // However, we cannot create new ApplicationTokens from identifiers
+    // So we filter the existing selection based on the remaining app count
+    
+    DispatchQueue.main.async {
+      guard let currentSelection = globalActivitySelection else {
+        resolve(true)
+        return
+      }
+      
+      // Count how many apps and categories should remain
+      let remainingAppCount = appIdentifiers.filter { $0.hasPrefix("app_") }.count
+      let remainingCategoryCount = appIdentifiers.filter { $0.hasPrefix("category_") }.count
+      
+      // Create a new selection with filtered tokens
+      var newSelection = FamilyActivitySelection()
+      
+      // Keep only the first N app tokens
+      let currentAppTokens = Array(currentSelection.applicationTokens)
+      for (index, token) in currentAppTokens.enumerated() {
+        if index < remainingAppCount {
+          newSelection.applicationTokens.insert(token)
+        }
+      }
+      
+      // Keep only the first N category tokens
+      let currentCategoryTokens = Array(currentSelection.categoryTokens)
+      for (index, token) in currentCategoryTokens.enumerated() {
+        if index < remainingCategoryCount {
+          newSelection.categoryTokens.insert(token)
+        }
+      }
+      
+      // Update global and storage
+      globalActivitySelection = newSelection
+      if scheduleId.isEmpty {
+        FamilyActivitySelectionStorage.shared.saveGlobalSelection(newSelection)
+      } else {
+        FamilyActivitySelectionStorage.shared.saveSelection(newSelection, forScheduleId: scheduleId)
+      }
+      
+      print("[FamilyActivityPickerModule] Updated selection for schedule \(scheduleId): \(remainingAppCount) apps, \(remainingCategoryCount) categories")
+      resolve(true)
+    }
+  }
 }
 
 // SwiftUI view wrapper for FamilyActivityPicker
@@ -432,8 +518,14 @@ struct FamilyActivityPickerViewWrapper: View {
         }
         ToolbarItem(placement: .navigationBarLeading) {
           Button("Cancel") {
-            // Return empty selection on cancel
-            onSelection(FamilyActivitySelection())
+            // On cancel, restore the initial selection (if any) or return empty
+            // This prevents losing the selection when user just wants to close the picker
+            if let initial = initialSelection, 
+               (!initial.applicationTokens.isEmpty || !initial.categoryTokens.isEmpty) {
+              onSelection(initial)
+            } else {
+              onSelection(FamilyActivitySelection())
+            }
             dismiss()
           }
         }

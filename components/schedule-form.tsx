@@ -2,7 +2,7 @@ import { Colors } from '@/constants/theme';
 import FamilyActivityPickerModule from '@/modules/family-activity-picker';
 import { BlockerSchedule } from '@/types/blocker';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Alert, Modal, Platform, ScrollView, StyleSheet, TextInput, TouchableOpacity, View } from 'react-native';
 import { IOSActivityPicker } from './ios-activity-picker';
 import { ThemedText } from './themed-text';
@@ -33,6 +33,9 @@ const dateToTimeString = (date: Date): string => {
 };
 
 export function ScheduleForm({ schedule, onSave, onCancel }: ScheduleFormProps) {
+  console.log('[DETOX_DEBUG] ScheduleForm: Component rendering');
+  console.log('[DETOX_DEBUG] ScheduleForm: schedule prop:', JSON.stringify(schedule, null, 2));
+  
   const [name, setName] = useState(schedule?.name || '');
   const [startTime, setStartTime] = useState(schedule?.startTime || '09:00');
   const [endTime, setEndTime] = useState(schedule?.endTime || '17:00');
@@ -40,12 +43,53 @@ export function ScheduleForm({ schedule, onSave, onCancel }: ScheduleFormProps) 
   const [isActive, setIsActive] = useState(schedule?.isActive ?? true);
   const [apps, setApps] = useState<string[]>(schedule?.apps || []);
   const [showPicker, setShowPicker] = useState(false);
+  const [isLoadingApps, setIsLoadingApps] = useState(false);
+  const [tokensLost, setTokensLost] = useState(false);
+  
+  // Generate a stable ID for new schedules (used for saving selection)
+  const [scheduleId] = useState(() => {
+    const id = schedule?.id || Date.now().toString();
+    console.log('[DETOX_DEBUG] ScheduleForm: Generated/using scheduleId:', id);
+    return id;
+  });
+  
+  console.log('[DETOX_DEBUG] ScheduleForm: Initial state - name:', name, 'apps count:', apps.length, 'days:', selectedDays);
   
   // Time picker states
   const [showStartTimePicker, setShowStartTimePicker] = useState(false);
   const [showEndTimePicker, setShowEndTimePicker] = useState(false);
   const [tempStartTime, setTempStartTime] = useState(timeStringToDate(startTime));
   const [tempEndTime, setTempEndTime] = useState(timeStringToDate(endTime));
+  
+  // Load saved selection when editing an existing schedule
+  useEffect(() => {
+    const loadSavedSelection = async () => {
+      if (schedule?.id && schedule.apps.length > 0) {
+        setIsLoadingApps(true);
+        try {
+          // Try to load saved selection from native module
+          // This restores the globalActivitySelection for blocking to work
+          const savedApps = await FamilyActivityPickerModule.loadSavedSelectionForScheduleId(schedule.id);
+          if (savedApps && savedApps.length > 0) {
+            // Tokens are available
+            console.log('Restored native selection for schedule:', schedule.id, savedApps);
+            setTokensLost(false);
+          } else {
+            // Tokens were lost after app restart
+            console.log('Tokens lost for schedule:', schedule.id);
+            setTokensLost(true);
+          }
+        } catch (error) {
+          console.error('Error loading saved selection:', error);
+          setTokensLost(true);
+        } finally {
+          setIsLoadingApps(false);
+        }
+      }
+    };
+    
+    loadSavedSelection();
+  }, [schedule?.id, schedule?.apps.length]);
 
   const handleStartTimeChange = (event: any, selectedDate?: Date) => {
     if (Platform.OS === 'android') {
@@ -98,26 +142,72 @@ export function ScheduleForm({ schedule, onSave, onCancel }: ScheduleFormProps) 
   };
 
   const handlePickerSelect = (selectedAppIds: string[]) => {
+    console.log('[DETOX_DEBUG] ScheduleForm.handlePickerSelect: Received apps:', selectedAppIds);
     setApps(selectedAppIds);
     setShowPicker(false);
+    // Reset tokensLost flag since user just selected new apps
+    if (selectedAppIds.length > 0) {
+      setTokensLost(false);
+    }
+  };
+  
+  // Handle removing an app from the list
+  // Due to iOS limitations (Set doesn't guarantee order), we can't reliably remove individual tokens
+  // Instead, we clear the selection and ask user to re-select apps
+  const handleRemoveApp = async (indexToRemove: number) => {
+    Alert.alert(
+      'Remove App',
+      'Due to iOS limitations, removing individual apps requires re-selecting all apps. Do you want to clear the selection and choose apps again?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Clear & Re-select',
+          style: 'destructive',
+          onPress: async () => {
+            // Clear all apps
+            setApps([]);
+            
+            // Clear native selection
+            try {
+              if (FamilyActivityPickerModule && typeof FamilyActivityPickerModule.clearSelectionForScheduleId === 'function') {
+                await FamilyActivityPickerModule.clearSelectionForScheduleId(scheduleId);
+              }
+            } catch (error) {
+              console.error('Error clearing selection:', error);
+            }
+            
+            // Open picker to re-select
+            setTimeout(() => {
+              setShowPicker(true);
+            }, 300);
+          },
+        },
+      ]
+    );
   };
 
   const handleSave = () => {
+    console.log('[DETOX_DEBUG] ScheduleForm.handleSave: Called');
+    console.log('[DETOX_DEBUG] ScheduleForm.handleSave: Current state - name:', name, 'apps:', apps.length, 'days:', selectedDays.length);
+    
     if (!name.trim()) {
+      console.log('[DETOX_DEBUG] ScheduleForm.handleSave: Validation failed - no name');
       Alert.alert('Error', 'Please enter a schedule name');
       return;
     }
     if (apps.length === 0) {
+      console.log('[DETOX_DEBUG] ScheduleForm.handleSave: Validation failed - no apps');
       Alert.alert('Error', 'Please select at least one app to block');
       return;
     }
     if (selectedDays.length === 0) {
+      console.log('[DETOX_DEBUG] ScheduleForm.handleSave: Validation failed - no days');
       Alert.alert('Error', 'Please select at least one day');
       return;
     }
 
     const newSchedule: BlockerSchedule = {
-      id: schedule?.id || Date.now().toString(),
+      id: scheduleId, // Use the stable scheduleId
       name: name.trim(),
       startTime,
       endTime,
@@ -126,6 +216,7 @@ export function ScheduleForm({ schedule, onSave, onCancel }: ScheduleFormProps) 
       apps,
     };
 
+    console.log('[DETOX_DEBUG] ScheduleForm.handleSave: Creating schedule:', JSON.stringify(newSchedule, null, 2));
     onSave(newSchedule);
   };
 
@@ -214,16 +305,30 @@ export function ScheduleForm({ schedule, onSave, onCancel }: ScheduleFormProps) 
               activeOpacity={0.7}
             >
               <IconSymbol name="plus.circle.fill" size={20} color={Colors.dark.primary} />
-              <ThemedText style={styles.selectButtonText}>Select Apps</ThemedText>
+              <ThemedText style={styles.selectButtonText}>{tokensLost ? 'Re-select Apps' : 'Select Apps'}</ThemedText>
             </TouchableOpacity>
           </View>
+          
+          {/* Warning when tokens are lost after app restart */}
+          {tokensLost && apps.length > 0 && (
+            <View style={styles.warningBox}>
+              <IconSymbol name="exclamationmark.triangle.fill" size={16} color="#FF9500" />
+              <ThemedText style={styles.warningText}>
+                App tokens were lost after restart. Please tap "Re-select Apps" to restore blocking functionality.
+              </ThemedText>
+            </View>
+          )}
+          
           {apps.length > 0 ? (
             <View style={styles.appsList}>
               {apps.map((appId, index) => (
-                <View key={index} style={styles.appItem}>
-                  <ThemedText style={styles.appName}>{appId}</ThemedText>
+                <View key={index} style={[styles.appItem, tokensLost && styles.appItemWarning]}>
+                  <ThemedText style={styles.appName}>
+                    {appId.startsWith('app_') ? `App ${parseInt(appId.replace('app_', '')) + 1}` : 
+                     appId.startsWith('category_') ? `Category ${parseInt(appId.replace('category_', '')) + 1}` : appId}
+                  </ThemedText>
                   <TouchableOpacity
-                    onPress={() => setApps(apps.filter((_, i) => i !== index))}
+                    onPress={() => handleRemoveApp(index)}
                   >
                     <IconSymbol name="xmark.circle.fill" size={20} color="#FF3B30" />
                   </TouchableOpacity>
@@ -253,6 +358,7 @@ export function ScheduleForm({ schedule, onSave, onCancel }: ScheduleFormProps) 
         onClose={() => setShowPicker(false)}
         onSelect={handlePickerSelect}
         selectedApps={apps}
+        scheduleId={scheduleId}
       />
 
       {/* Start Time Picker Modal */}
@@ -471,6 +577,27 @@ const styles = StyleSheet.create({
     fontSize: 14,
     opacity: 0.7,
     fontStyle: 'italic',
+  },
+  warningBox: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 8,
+    padding: 12,
+    backgroundColor: 'rgba(255, 149, 0, 0.15)',
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 149, 0, 0.3)',
+    marginBottom: 12,
+  },
+  warningText: {
+    flex: 1,
+    fontSize: 13,
+    color: '#FF9500',
+    lineHeight: 18,
+  },
+  appItemWarning: {
+    borderColor: 'rgba(255, 149, 0, 0.5)',
+    opacity: 0.7,
   },
   timeInput: {
     backgroundColor: '#1a1a1a',

@@ -4,32 +4,39 @@ interface FamilyActivityPickerModuleInterface {
   isAuthorized?(): Promise<boolean>;
   requestAuthorization(): Promise<boolean>;
   presentFamilyActivityPicker(): Promise<string[]>;
+  presentFamilyActivityPickerWithScheduleId(scheduleId: string): Promise<string[]>;
   getSelectedApplications(): Promise<string[]>;
+  getSelectedApplicationsForScheduleId(scheduleId: string): Promise<string[]>;
+  loadSavedSelectionForScheduleId(scheduleId: string): Promise<string[]>;
+  clearSelectionForScheduleId(scheduleId: string): Promise<boolean>;
+  updateSelectionFromApps(scheduleId: string, appIdentifiers: string[]): Promise<boolean>;
 }
 
 const { FamilyActivityPickerModule: NativeFamilyActivityPickerModule } = NativeModules;
 
-const FamilyActivityPickerModule: FamilyActivityPickerModuleInterface = NativeFamilyActivityPickerModule || {
+const fallbackModule: FamilyActivityPickerModuleInterface = {
   isAuthorized: async () => {
     if (Platform.OS !== 'ios') {
       return false;
     }
-    // Native module not available - return false
     return false;
   },
   requestAuthorization: async () => {
     if (Platform.OS !== 'ios') {
       return false;
     }
-    // Native module not available - return false
     return false;
   },
   presentFamilyActivityPicker: async () => {
     if (Platform.OS !== 'ios') {
       return [];
     }
-    // Native module not available - silently return empty array
-    // This is expected if native module is not built yet
+    return [];
+  },
+  presentFamilyActivityPickerWithScheduleId: async () => {
+    if (Platform.OS !== 'ios') {
+      return [];
+    }
     return [];
   },
   getSelectedApplications: async () => {
@@ -38,7 +45,36 @@ const FamilyActivityPickerModule: FamilyActivityPickerModuleInterface = NativeFa
     }
     return [];
   },
+  getSelectedApplicationsForScheduleId: async () => {
+    if (Platform.OS !== 'ios') {
+      return [];
+    }
+    return [];
+  },
+  loadSavedSelectionForScheduleId: async () => {
+    if (Platform.OS !== 'ios') {
+      return [];
+    }
+    return [];
+  },
+  clearSelectionForScheduleId: async () => {
+    if (Platform.OS !== 'ios') {
+      return false;
+    }
+    return false;
+  },
+  updateSelectionFromApps: async () => {
+    if (Platform.OS !== 'ios') {
+      return false;
+    }
+    return false;
+  },
 };
+
+const FamilyActivityPickerModule: FamilyActivityPickerModuleInterface = 
+  (Platform.OS === 'ios' && NativeFamilyActivityPickerModule) 
+    ? NativeFamilyActivityPickerModule 
+    : fallbackModule;
 
 export default FamilyActivityPickerModule;
 

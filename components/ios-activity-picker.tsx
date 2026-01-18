@@ -8,12 +8,16 @@ interface IOSActivityPickerProps {
   onClose: () => void;
   onSelect: (appIdentifiers: string[]) => void;
   selectedApps?: string[];
+  scheduleId?: string;
 }
 
-export function IOSActivityPicker({ visible, onClose, onSelect, selectedApps = [] }: IOSActivityPickerProps) {
+export function IOSActivityPicker({ visible, onClose, onSelect, selectedApps = [], scheduleId = '' }: IOSActivityPickerProps) {
   const [isLoading, setIsLoading] = useState(false);
 
+  console.log('[DETOX_DEBUG] IOSActivityPicker: Rendering, visible:', visible, 'scheduleId:', scheduleId, 'selectedApps:', selectedApps);
+
   useEffect(() => {
+    console.log('[DETOX_DEBUG] IOSActivityPicker: useEffect triggered, visible:', visible, 'isLoading:', isLoading);
     if (visible && Platform.OS === 'ios' && !isLoading) {
       handlePresentPicker();
     } else if (!visible) {
@@ -23,25 +27,38 @@ export function IOSActivityPicker({ visible, onClose, onSelect, selectedApps = [
   }, [visible]);
 
   const handlePresentPicker = async () => {
-    if (isLoading) return; // Prevent multiple calls
+    console.log('[DETOX_DEBUG] IOSActivityPicker.handlePresentPicker: Called');
+    if (isLoading) {
+      console.log('[DETOX_DEBUG] IOSActivityPicker.handlePresentPicker: Already loading, returning');
+      return;
+    }
     
     setIsLoading(true);
     try {
       // Check if module is available
-      if (!FamilyActivityPickerModule || typeof FamilyActivityPickerModule.presentFamilyActivityPicker !== 'function') {
+      if (!FamilyActivityPickerModule || typeof FamilyActivityPickerModule.presentFamilyActivityPickerWithScheduleId !== 'function') {
+        // Fallback to old method without scheduleId
+        if (FamilyActivityPickerModule && typeof FamilyActivityPickerModule.presentFamilyActivityPicker === 'function') {
+          console.log('[DETOX_DEBUG] IOSActivityPicker.handlePresentPicker: Calling legacy presentFamilyActivityPicker');
+          const appIdentifiers = await FamilyActivityPickerModule.presentFamilyActivityPicker();
+          console.log('[DETOX_DEBUG] IOSActivityPicker.handlePresentPicker: Legacy picker returned:', appIdentifiers);
+          onSelect(Array.isArray(appIdentifiers) ? appIdentifiers : []);
+          onClose();
+          return;
+        }
         // Module not available - silently return empty array (native module not built yet)
-        console.log('FamilyActivityPickerModule not available - returning empty selection');
+        console.log('[DETOX_DEBUG] IOSActivityPicker.handlePresentPicker: Module not available');
         onSelect([]);
         setIsLoading(false);
         onClose();
         return;
       }
       
-      console.log('Calling presentFamilyActivityPicker...');
+      console.log('[DETOX_DEBUG] IOSActivityPicker.handlePresentPicker: Calling presentFamilyActivityPickerWithScheduleId with scheduleId:', scheduleId);
       // The picker returns the selected app identifiers directly as an array
       // This promise resolves when user selects apps and presses "Done" or "Cancel"
-      const appIdentifiers = await FamilyActivityPickerModule.presentFamilyActivityPicker();
-      console.log('Picker returned:', appIdentifiers);
+      const appIdentifiers = await FamilyActivityPickerModule.presentFamilyActivityPickerWithScheduleId(scheduleId);
+      console.log('[DETOX_DEBUG] IOSActivityPicker.handlePresentPicker: Picker returned:', appIdentifiers);
       
       // Always call onSelect with the result (even if empty array)
       onSelect(Array.isArray(appIdentifiers) ? appIdentifiers : []);
@@ -49,7 +66,7 @@ export function IOSActivityPicker({ visible, onClose, onSelect, selectedApps = [
       // Close the picker after selection is made
       onClose();
     } catch (error: any) {
-      console.error('Error presenting picker:', error);
+      console.error('[DETOX_DEBUG] IOSActivityPicker.handlePresentPicker: Error presenting picker:', error);
       // Silently fail - just return empty array
       // Don't log errors about child/teen accounts - this is expected for adult accounts
       // The picker will just show empty list, which is the expected behavior
