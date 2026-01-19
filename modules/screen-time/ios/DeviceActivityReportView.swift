@@ -3,45 +3,9 @@ import DeviceActivity
 import FamilyControls
 import ManagedSettings
 
-// MARK: - DeviceActivityReport Integration
-// This provides Screen Time data by rendering the system's DeviceActivityReport
-// and extracting data from it to save to UserDefaults
-
-@available(iOS 16.0, *)
-struct ScreenTimeReportView: View {
-    @State private var context: DeviceActivityReport.Context = .totalActivity
-    @State private var filter: DeviceActivityFilter
-    
-    init() {
-        // Default to today's activity
-        let calendar = Calendar.current
-        let now = Date()
-        let startOfDay = calendar.startOfDay(for: now)
-        
-        _filter = State(initialValue: DeviceActivityFilter(
-            segment: .daily(
-                during: DateInterval(start: startOfDay, end: now)
-            ),
-            users: .all,
-            devices: .init([.iPhone])
-        ))
-    }
-    
-    var body: some View {
-        DeviceActivityReport(context, filter: filter)
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
-    }
-}
-
-// MARK: - Report Context Extension
-
-@available(iOS 16.0, *)
-extension DeviceActivityReport.Context {
-    static let totalActivity = Self("TotalActivity")
-}
-
 // MARK: - Screen Time Data Fetcher
-// This class fetches screen time data and saves it to shared UserDefaults
+// This class fetches screen time data from shared UserDefaults
+// Data is populated by the DeviceActivityReportExtension
 
 @objc public class ScreenTimeDataFetcher: NSObject {
     
@@ -64,10 +28,7 @@ extension DeviceActivityReport.Context {
         
         // DeviceActivityReport data is not directly accessible programmatically
         // The data is only available through the DeviceActivityReport SwiftUI view
-        // or through a DeviceActivityReportExtension
-        
-        // For now, we'll return cached data from UserDefaults if available
-        // The DeviceActivityReportExtension (if installed) updates this data
+        // which triggers the DeviceActivityReportExtension
         
         // Check if we have any cached data
         guard let userDefaults = userDefaults else {
@@ -98,36 +59,5 @@ extension DeviceActivityReport.Context {
         userDefaults?.removeObject(forKey: "screenTime_historical")
         userDefaults?.synchronize()
         print("[ScreenTimeDataFetcher] Cleared cached data")
-    }
-}
-
-// MARK: - Screen Time Report Hosting Controller
-// Provides a UIViewController wrapper for the SwiftUI DeviceActivityReport
-
-@available(iOS 16.0, *)
-@objc public class ScreenTimeReportHostingController: UIViewController {
-    
-    private var hostingController: UIHostingController<ScreenTimeReportView>?
-    
-    public override func viewDidLoad() {
-        super.viewDidLoad()
-        
-        let reportView = ScreenTimeReportView()
-        hostingController = UIHostingController(rootView: reportView)
-        
-        if let hostingController = hostingController {
-            addChild(hostingController)
-            view.addSubview(hostingController.view)
-            hostingController.view.translatesAutoresizingMaskIntoConstraints = false
-            
-            NSLayoutConstraint.activate([
-                hostingController.view.topAnchor.constraint(equalTo: view.topAnchor),
-                hostingController.view.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-                hostingController.view.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-                hostingController.view.bottomAnchor.constraint(equalTo: view.bottomAnchor)
-            ])
-            
-            hostingController.didMove(toParent: self)
-        }
     }
 }

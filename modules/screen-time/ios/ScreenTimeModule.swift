@@ -405,11 +405,21 @@ public class ScreenTimeModule: NSObject {
     print("[ScreenTimeModule] removeDeviceActivitySchedule called for \(scheduleId)")
     
     // Clear ManagedSettingsStore for this schedule to prevent orphaned blocking rules
+    // Also clear the "main" store since blocking might have been started there
     DispatchQueue.main.async {
+      // Clear schedule-specific store
       let storeName = scheduleId.isEmpty ? "main" : "schedule_\(scheduleId)"
       let store = ManagedSettingsStore(named: ManagedSettingsStore.Name(storeName))
       store.clearAllSettings()
       print("[ScreenTimeModule] Cleared ManagedSettingsStore for \(storeName)")
+      
+      // Also clear main store (blocking is often started via blockApps which uses "main")
+      if !scheduleId.isEmpty {
+        let mainStore = ManagedSettingsStore(named: ManagedSettingsStore.Name("main"))
+        mainStore.clearAllSettings()
+        print("[ScreenTimeModule] Also cleared ManagedSettingsStore for main")
+      }
+      
       resolve(true)
     }
   }

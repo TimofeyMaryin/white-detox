@@ -10,6 +10,7 @@ import { ScreenTimeChart } from '@/components/screen-time-chart';
 import { useRouter } from 'expo-router';
 import adaptyService from '@/services/adapty-service';
 import { ADAPTY_CONFIG } from '@/config/adapty';
+import { HiddenDeviceActivityReport } from '@/components/device-activity-report';
 
 type TimePeriod = 'Day' | 'Week' | 'Month';
 
@@ -197,6 +198,9 @@ export default function ReportScreen() {
 
   return (
     <ThemedView style={styles.container}>
+      {/* Hidden DeviceActivityReport - triggers iOS to call extension and populate Screen Time data */}
+      <HiddenDeviceActivityReport periodType={selectedPeriod.toLowerCase() as 'day' | 'week' | 'month'} />
+      
       {/* Period Selector */}
       <View style={styles.periodSelector}>
         {(['Day', 'Week', 'Month'] as TimePeriod[]).map((period) => {

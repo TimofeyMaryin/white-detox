@@ -285,6 +285,8 @@ export function BlockerProvider({ children }: { children: ReactNode }) {
   const deleteSchedule = useCallback(async (id: string) => {
     console.log('[DETOX_DEBUG] deleteSchedule: Called with id:', id);
     console.log('[DETOX_DEBUG] deleteSchedule: Current schedules count:', schedules.length);
+    console.log('[DETOX_DEBUG] deleteSchedule: Current blocking state:', state.isBlocking, 'currentScheduleId:', state.currentScheduleId);
+    
     try {
       // First, remove the DeviceActivity schedule and clear ManagedSettingsStore
       if (ScreenTimeModule && typeof ScreenTimeModule.removeDeviceActivitySchedule === 'function') {
@@ -297,6 +299,28 @@ export function BlockerProvider({ children }: { children: ReactNode }) {
         console.log('[DETOX_DEBUG] deleteSchedule: Clearing selection for schedule');
         await FamilyActivityPickerModule.clearSelectionForScheduleId(id);
       }
+      
+      // If blocking is active and this schedule is being blocked, stop the timer
+      if (state.isBlocking) {
+        console.log('[DETOX_DEBUG] deleteSchedule: Blocking is active, stopping timer');
+        // Calculate final saved time before stopping
+        const finalSavedTime = state.startedAt 
+          ? calculateElapsedTime(state.startedAt, state.accumulatedTime)
+          : state.savedTime;
+        
+        const newState: BlockerState = {
+          ...state,
+          isBlocking: false,
+          isPaused: false,
+          startedAt: undefined,
+          currentScheduleId: undefined,
+          accumulatedTime: finalSavedTime,
+          savedTime: finalSavedTime,
+        };
+        console.log('[DETOX_DEBUG] deleteSchedule: Stopping blocking, final savedTime:', finalSavedTime);
+        setState(newState);
+        await AsyncStorage.setItem(BLOCKER_STATE_KEY, JSON.stringify(newState));
+      }
     } catch (error) {
       console.error('[DETOX_DEBUG] deleteSchedule: Error removing DeviceActivity schedule:', error);
     }
@@ -305,7 +329,7 @@ export function BlockerProvider({ children }: { children: ReactNode }) {
     console.log('[DETOX_DEBUG] deleteSchedule: New schedules count:', newSchedules.length);
     await saveSchedules(newSchedules);
     console.log('[DETOX_DEBUG] deleteSchedule: Completed');
-  }, [schedules]);
+  }, [schedules, state]);
 
   return (
     <BlockerContext.Provider
