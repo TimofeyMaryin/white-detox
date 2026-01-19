@@ -48,7 +48,8 @@
         "react-native-device-activity",
         {
           "appleTeamId": "YOUR_TEAM_ID",
-          "appGroup": "group.com.danielian.selfcontrol.dopaminedetox"
+          "appGroup": "group.com.danielian.selfcontrol.dopaminedetox",
+          "copyToTargetFolder": false
         }
       ],
       [

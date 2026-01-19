@@ -2,7 +2,7 @@
  * Blocker Context
  *
  * Global state management for app blocking functionality.
- * Manages blocking state, schedules, and coordinates with DeviceActivity API.
+ * Manages blocking state and timer without scheduling.
  *
  * @module contexts/blocker-context
  */
@@ -19,7 +19,7 @@ import React, {
 import { AppState, AppStateStatus, Platform } from 'react-native';
 import { AuthorizationStatus, AuthorizationStatusType } from 'react-native-device-activity';
 
-import { BlockerState, BlockerSchedule } from '@/types/blocker';
+import { BlockerState } from '@/types/blocker';
 import deviceActivityService from '@/services/device-activity.service';
 import storageService from '@/services/storage.service';
 
@@ -30,30 +30,16 @@ import storageService from '@/services/storage.service';
 interface BlockerContextType {
   /** Current blocking state */
   state: BlockerState;
-  /** All saved schedules */
-  schedules: BlockerSchedule[];
   /** Whether initial data is loading */
   isLoading: boolean;
   /** Screen Time authorization status */
   authorizationStatus: AuthorizationStatusType;
   /** Request Screen Time authorization */
   requestAuthorization: () => Promise<void>;
-  /** Start blocking apps (optionally for specific schedule) */
-  startBlocking: (scheduleId?: string) => Promise<void>;
+  /** Start blocking apps */
+  startBlocking: () => Promise<void>;
   /** Stop blocking and save accumulated time */
   stopBlocking: () => Promise<void>;
-  /** Pause blocking (keeps time accumulated) */
-  pauseBlocking: () => Promise<void>;
-  /** Resume paused blocking */
-  resumeBlocking: () => Promise<void>;
-  /** Add a new schedule */
-  addSchedule: (schedule: BlockerSchedule) => Promise<void>;
-  /** Update an existing schedule */
-  updateSchedule: (id: string, updates: Partial<BlockerSchedule>) => Promise<void>;
-  /** Delete a schedule and stop its monitoring */
-  deleteSchedule: (id: string) => Promise<void>;
-  /** Refresh schedules from storage */
-  refreshSchedules: () => Promise<void>;
 }
 
 // ============================================================================
@@ -62,10 +48,6 @@ interface BlockerContextType {
 
 /**
  * Calculate total elapsed time since blocking started
- *
- * @param startedAt - Timestamp when blocking started
- * @param accumulatedTime - Time accumulated before current session
- * @returns Total elapsed time in seconds
  */
 function calculateElapsedTime(startedAt: number | undefined, accumulatedTime = 0): number {
   if (!startedAt) return accumulatedTime;
@@ -101,7 +83,6 @@ interface BlockerProviderProps {
 
 export function BlockerProvider({ children }: BlockerProviderProps) {
   const [state, setState] = useState<BlockerState>(createDefaultState());
-  const [schedules, setSchedules] = useState<BlockerSchedule[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [authorizationStatus, setAuthorizationStatus] = useState<AuthorizationStatusType>(
     AuthorizationStatus.notDetermined
@@ -114,7 +95,7 @@ export function BlockerProvider({ children }: BlockerProviderProps) {
   // --------------------------------------------------------------------------
 
   useEffect(() => {
-    loadData();
+    loadState();
 
     if (Platform.OS === 'ios') {
       setAuthorizationStatus(deviceActivityService.getAuthorizationStatus());
@@ -127,17 +108,6 @@ export function BlockerProvider({ children }: BlockerProviderProps) {
 
     const subscription = deviceActivityService.onAuthorizationStatusChange((status) => {
       setAuthorizationStatus(status);
-    });
-
-    return () => subscription.remove();
-  }, []);
-
-  // Listen for device activity monitor events (for debugging)
-  useEffect(() => {
-    if (Platform.OS !== 'ios') return;
-
-    const subscription = deviceActivityService.onMonitorEvent((event) => {
-      console.log('[BlockerContext] Monitor event:', event.callbackName);
     });
 
     return () => subscription.remove();
@@ -191,9 +161,9 @@ export function BlockerProvider({ children }: BlockerProviderProps) {
   // Data Loading
   // --------------------------------------------------------------------------
 
-  const loadData = async () => {
+  const loadState = async () => {
     try {
-      const { state: savedState, schedules: savedSchedules } = await storageService.loadAll();
+      const savedState = await storageService.getBlockerState();
 
       if (savedState) {
         // Recalculate elapsed time if blocking was active
@@ -205,19 +175,12 @@ export function BlockerProvider({ children }: BlockerProviderProps) {
         }
         setState(savedState);
       }
-
-      setSchedules(savedSchedules);
     } catch (error) {
-      console.error('[BlockerContext] Error loading data:', error);
+      console.error('[BlockerContext] Error loading state:', error);
     } finally {
       setIsLoading(false);
     }
   };
-
-  const refreshSchedules = useCallback(async () => {
-    const savedSchedules = await storageService.getSchedules();
-    setSchedules(savedSchedules);
-  }, []);
 
   // --------------------------------------------------------------------------
   // Authorization
@@ -234,33 +197,21 @@ export function BlockerProvider({ children }: BlockerProviderProps) {
   // Blocking Controls
   // --------------------------------------------------------------------------
 
-  const startBlocking = useCallback(
-    async (scheduleId?: string) => {
-      const now = Date.now();
+  const startBlocking = useCallback(async () => {
+    const now = Date.now();
 
-      const newState: BlockerState = {
-        ...state,
-        isBlocking: true,
-        isPaused: false,
-        startedAt: now,
-        currentScheduleId: scheduleId,
-        accumulatedTime: state.savedTime,
-        savedTime: state.savedTime,
-      };
+    const newState: BlockerState = {
+      ...state,
+      isBlocking: true,
+      isPaused: false,
+      startedAt: now,
+      accumulatedTime: state.savedTime,
+      savedTime: state.savedTime,
+    };
 
-      setState(newState);
-      await storageService.saveBlockerState(newState);
-
-      // Block apps if schedule has selection
-      if (Platform.OS === 'ios' && scheduleId) {
-        const schedule = schedules.find((s) => s.id === scheduleId);
-        if (schedule?.familyActivitySelectionId) {
-          deviceActivityService.blockApps(schedule.familyActivitySelectionId);
-        }
-      }
-    },
-    [state, schedules]
-  );
+    setState(newState);
+    await storageService.saveBlockerState(newState);
+  }, [state]);
 
   const stopBlocking = useCallback(async () => {
     const finalSavedTime = state.startedAt
@@ -272,7 +223,6 @@ export function BlockerProvider({ children }: BlockerProviderProps) {
       isBlocking: false,
       isPaused: false,
       startedAt: undefined,
-      currentScheduleId: undefined,
       accumulatedTime: finalSavedTime,
       savedTime: finalSavedTime,
     };
@@ -286,118 +236,6 @@ export function BlockerProvider({ children }: BlockerProviderProps) {
     }
   }, [state]);
 
-  const pauseBlocking = useCallback(async () => {
-    const currentSavedTime = state.startedAt
-      ? calculateElapsedTime(state.startedAt, state.accumulatedTime)
-      : state.savedTime;
-
-    const newState: BlockerState = {
-      ...state,
-      isPaused: true,
-      pausedAt: new Date(),
-      startedAt: undefined,
-      accumulatedTime: currentSavedTime,
-      savedTime: currentSavedTime,
-    };
-
-    setState(newState);
-    await storageService.saveBlockerState(newState);
-  }, [state]);
-
-  const resumeBlocking = useCallback(async () => {
-    const now = Date.now();
-
-    const newState: BlockerState = {
-      ...state,
-      isPaused: false,
-      pausedAt: undefined,
-      startedAt: now,
-    };
-
-    setState(newState);
-    await storageService.saveBlockerState(newState);
-  }, [state]);
-
-  // --------------------------------------------------------------------------
-  // Schedule Management
-  // --------------------------------------------------------------------------
-
-  const addSchedule = useCallback(
-    async (schedule: BlockerSchedule) => {
-      const newSchedules = [...schedules, schedule];
-      await storageService.saveSchedules(newSchedules);
-      setSchedules(newSchedules);
-
-      // Start monitoring if schedule is active
-      if (
-        Platform.OS === 'ios' &&
-        schedule.isActive &&
-        schedule.familyActivitySelectionId &&
-        schedule.daysOfWeek.length > 0
-      ) {
-        await deviceActivityService.startMonitoring(schedule);
-      }
-    },
-    [schedules]
-  );
-
-  const updateSchedule = useCallback(
-    async (id: string, updates: Partial<BlockerSchedule>) => {
-      const existingSchedule = schedules.find((s) => s.id === id);
-      if (!existingSchedule) return;
-
-      const updatedSchedule = { ...existingSchedule, ...updates };
-      const newSchedules = schedules.map((s) => (s.id === id ? updatedSchedule : s));
-
-      await storageService.saveSchedules(newSchedules);
-      setSchedules(newSchedules);
-
-      // Update monitoring
-      if (Platform.OS === 'ios') {
-        await deviceActivityService.updateMonitoring(existingSchedule, updatedSchedule);
-      }
-    },
-    [schedules]
-  );
-
-  const deleteSchedule = useCallback(
-    async (id: string) => {
-      const scheduleToDelete = schedules.find((s) => s.id === id);
-
-      // Stop monitoring and clear blocks
-      if (Platform.OS === 'ios' && scheduleToDelete?.daysOfWeek) {
-        deviceActivityService.stopMonitoring(id, scheduleToDelete.daysOfWeek);
-        deviceActivityService.unblockAllApps();
-      }
-
-      // Stop timer if blocking is active (only one schedule allowed)
-      if (state.isBlocking) {
-        const finalSavedTime = state.startedAt
-          ? calculateElapsedTime(state.startedAt, state.accumulatedTime)
-          : state.savedTime;
-
-        const newState: BlockerState = {
-          ...state,
-          isBlocking: false,
-          isPaused: false,
-          startedAt: undefined,
-          currentScheduleId: undefined,
-          accumulatedTime: finalSavedTime,
-          savedTime: finalSavedTime,
-        };
-
-        setState(newState);
-        await storageService.saveBlockerState(newState);
-      }
-
-      // Remove from schedules
-      const newSchedules = schedules.filter((s) => s.id !== id);
-      await storageService.saveSchedules(newSchedules);
-      setSchedules(newSchedules);
-    },
-    [schedules, state]
-  );
-
   // --------------------------------------------------------------------------
   // Render
   // --------------------------------------------------------------------------
@@ -406,18 +244,11 @@ export function BlockerProvider({ children }: BlockerProviderProps) {
     <BlockerContext.Provider
       value={{
         state,
-        schedules,
         isLoading,
         authorizationStatus,
         requestAuthorization,
         startBlocking,
         stopBlocking,
-        pauseBlocking,
-        resumeBlocking,
-        addSchedule,
-        updateSchedule,
-        deleteSchedule,
-        refreshSchedules,
       }}
     >
       {children}
@@ -434,15 +265,6 @@ export function BlockerProvider({ children }: BlockerProviderProps) {
  *
  * @returns Blocker context with state and actions
  * @throws Error if used outside BlockerProvider
- *
- * @example
- * ```tsx
- * const { state, startBlocking, stopBlocking } = useBlocker();
- *
- * if (state.isBlocking) {
- *   return <BlockingActive onStop={stopBlocking} />;
- * }
- * ```
  */
 export function useBlocker(): BlockerContextType {
   const context = useContext(BlockerContext);

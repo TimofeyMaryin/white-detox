@@ -2,18 +2,16 @@
  * Storage Service
  *
  * Centralized service for persistent storage operations using AsyncStorage.
- * Handles all app data persistence including blocker state and schedules.
  *
  * @module services/storage
  */
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import type { BlockerState, BlockerSchedule } from '@/types/blocker';
+import type { BlockerState } from '@/types/blocker';
 
 /** Storage keys for app data */
 export const STORAGE_KEYS = {
   BLOCKER_STATE: '@blocker_state',
-  BLOCKER_SCHEDULES: '@blocker_schedules',
   ONBOARDING_COMPLETED: '@onboarding_completed',
   USER_SETTINGS: '@user_settings',
 } as const;
@@ -46,52 +44,6 @@ class StorageService {
       console.error('[StorageService] Error saving blocker state:', error);
       throw error;
     }
-  }
-
-  /**
-   * Get all schedules from storage
-   *
-   * @returns Array of BlockerSchedule or empty array
-   */
-  async getSchedules(): Promise<BlockerSchedule[]> {
-    try {
-      const data = await AsyncStorage.getItem(STORAGE_KEYS.BLOCKER_SCHEDULES);
-      return data ? JSON.parse(data) : [];
-    } catch (error) {
-      console.error('[StorageService] Error reading schedules:', error);
-      return [];
-    }
-  }
-
-  /**
-   * Save schedules to storage
-   *
-   * @param schedules - Array of schedules to persist
-   */
-  async saveSchedules(schedules: BlockerSchedule[]): Promise<void> {
-    try {
-      await AsyncStorage.setItem(STORAGE_KEYS.BLOCKER_SCHEDULES, JSON.stringify(schedules));
-    } catch (error) {
-      console.error('[StorageService] Error saving schedules:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * Load both blocker state and schedules at once
-   *
-   * @returns Object containing state and schedules
-   */
-  async loadAll(): Promise<{
-    state: BlockerState | null;
-    schedules: BlockerSchedule[];
-  }> {
-    const [state, schedules] = await Promise.all([
-      this.getBlockerState(),
-      this.getSchedules(),
-    ]);
-
-    return { state, schedules };
   }
 
   /**
