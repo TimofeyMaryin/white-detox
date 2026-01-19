@@ -266,22 +266,6 @@ export default function SettingsScreen() {
         {/* Support */}
         <View style={styles.section}>
           <ThemedText type="subtitle" style={styles.sectionTitle}>Support</ThemedText>
-          
-          <TouchableOpacity style={styles.settingRow} onPress={handleContactUs}>
-            <View style={styles.settingLeft}>
-              <IconSymbol name="envelope.fill" size={24} color={Colors.dark.primary} />
-              <ThemedText style={styles.settingLabel}>Contact Us</ThemedText>
-            </View>
-            <IconSymbol name="chevron.right" size={20} color={Colors.dark.icon} />
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.settingRow} onPress={handleSendFeedback}>
-            <View style={styles.settingLeft}>
-              <IconSymbol name="text.bubble.fill" size={24} color={Colors.dark.primary} />
-              <ThemedText style={styles.settingLabel}>Send Feedback</ThemedText>
-            </View>
-            <IconSymbol name="chevron.right" size={20} color={Colors.dark.icon} />
-          </TouchableOpacity>
 
           <TouchableOpacity style={styles.settingRow} onPress={handleRateUs}>
             <View style={styles.settingLeft}>

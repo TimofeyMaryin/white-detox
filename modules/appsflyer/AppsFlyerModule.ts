@@ -1,3 +1,12 @@
+/**
+ * AppsFlyer Native Module
+ *
+ * Wrapper for native AppsFlyer SDK.
+ * Provides silent fallback for development.
+ *
+ * @module modules/appsflyer
+ */
+
 import { NativeModules, Platform } from 'react-native';
 
 interface AppsFlyerModuleInterface {

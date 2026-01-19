@@ -1,40 +1,64 @@
-import { BlockerSchedule } from '@/types/blocker';
+/**
+ * Schedule Utilities
+ *
+ * Helper functions for schedule time calculations and checks.
+ *
+ * @module utils/scheduleUtils
+ */
+
+import type { BlockerSchedule } from '@/types/blocker';
 
 /**
- * Проверяет, попадает ли текущий момент в указанное расписание
+ * Convert time string (HH:MM) to minutes since midnight
+ */
+function timeToMinutes(time: string): number {
+  const [hours, minutes] = time.split(':').map(Number);
+  return hours * 60 + minutes;
+}
+
+/**
+ * Check if current time falls within a schedule's active period
+ *
+ * Handles schedules that cross midnight (e.g., 22:00 - 06:00).
+ *
+ * @param schedule - The schedule to check
+ * @returns Whether current time is within the schedule
+ *
+ * @example
+ * ```ts
+ * if (isWithinSchedule(schedule)) {
+ *   startBlocking();
+ * }
+ * ```
  */
 export function isWithinSchedule(schedule: BlockerSchedule): boolean {
   const now = new Date();
-  const currentDay = now.getDay(); // 0-6, где 0 - воскресенье
-  const currentHours = now.getHours();
-  const currentMinutes = now.getMinutes();
-  const currentTimeInMinutes = currentHours * 60 + currentMinutes;
+  const currentDay = now.getDay(); // 0-6, where 0 is Sunday
+  const currentTimeInMinutes = now.getHours() * 60 + now.getMinutes();
 
-  // Проверяем, входит ли текущий день в расписание
+  // Check if current day is in schedule
   if (!schedule.daysOfWeek.includes(currentDay)) {
     return false;
   }
 
-  // Парсим время начала и окончания
-  const [startHours, startMinutes] = schedule.startTime.split(':').map(Number);
-  const [endHours, endMinutes] = schedule.endTime.split(':').map(Number);
-  
-  const startTimeInMinutes = startHours * 60 + startMinutes;
-  const endTimeInMinutes = endHours * 60 + endMinutes;
+  const startTimeInMinutes = timeToMinutes(schedule.startTime);
+  const endTimeInMinutes = timeToMinutes(schedule.endTime);
 
-  // Проверяем, попадает ли текущее время в диапазон
-  // Учитываем случай, когда расписание переходит через полночь (например, 22:00 - 06:00)
+  // Handle schedules that cross midnight
   if (startTimeInMinutes <= endTimeInMinutes) {
-    // Обычный случай: время начала раньше времени окончания (09:00 - 17:00)
+    // Normal case: 09:00 - 17:00
     return currentTimeInMinutes >= startTimeInMinutes && currentTimeInMinutes < endTimeInMinutes;
   } else {
-    // Переход через полночь: время начала позже времени окончания (22:00 - 06:00)
+    // Crosses midnight: 22:00 - 06:00
     return currentTimeInMinutes >= startTimeInMinutes || currentTimeInMinutes < endTimeInMinutes;
   }
 }
 
 /**
- * Рассчитывает время в миллисекундах до начала следующего окна расписания
+ * Calculate milliseconds until the next schedule window starts
+ *
+ * @param schedule - The schedule to check
+ * @returns Milliseconds until start, or null if no upcoming window
  */
 export function getMillisecondsUntilScheduleStart(schedule: BlockerSchedule): number | null {
   const now = new Date();
@@ -44,38 +68,37 @@ export function getMillisecondsUntilScheduleStart(schedule: BlockerSchedule): nu
   const currentSeconds = now.getSeconds();
   const currentTimeInMinutes = currentHours * 60 + currentMinutes;
 
-  const [startHours, startMinutes] = schedule.startTime.split(':').map(Number);
-  const startTimeInMinutes = startHours * 60 + startMinutes;
-
-  // Сортируем дни недели
+  const startTimeInMinutes = timeToMinutes(schedule.startTime);
   const sortedDays = [...schedule.daysOfWeek].sort((a, b) => a - b);
-  
+
   if (sortedDays.length === 0) {
     return null;
   }
 
-  // Ищем ближайший день, когда расписание активно
+  // Find the next day when schedule is active
   for (let daysAhead = 0; daysAhead < 7; daysAhead++) {
     const targetDay = (currentDay + daysAhead) % 7;
-    
+
     if (sortedDays.includes(targetDay)) {
-      // Если это сегодня и время начала ещё не наступило
+      // If today and start time hasn't passed yet
       if (daysAhead === 0 && currentTimeInMinutes < startTimeInMinutes) {
         const minutesUntilStart = startTimeInMinutes - currentTimeInMinutes;
         return (minutesUntilStart * 60 - currentSeconds) * 1000;
       }
-      
-      // Если это другой день
+
+      // If another day
       if (daysAhead > 0) {
         const millisecondsPerDay = 24 * 60 * 60 * 1000;
-        const millisecondsUntilMidnight = 
-          ((24 - currentHours - 1) * 60 + (60 - currentMinutes - 1)) * 60 * 1000 + 
+        const millisecondsUntilMidnight =
+          ((24 - currentHours - 1) * 60 + (60 - currentMinutes - 1)) * 60 * 1000 +
           (60 - currentSeconds) * 1000;
         const millisecondsFromMidnightToStart = startTimeInMinutes * 60 * 1000;
-        
-        return millisecondsUntilMidnight + 
-               (daysAhead - 1) * millisecondsPerDay + 
-               millisecondsFromMidnightToStart;
+
+        return (
+          millisecondsUntilMidnight +
+          (daysAhead - 1) * millisecondsPerDay +
+          millisecondsFromMidnightToStart
+        );
       }
     }
   }
@@ -84,7 +107,10 @@ export function getMillisecondsUntilScheduleStart(schedule: BlockerSchedule): nu
 }
 
 /**
- * Рассчитывает время в миллисекундах до окончания текущего окна расписания
+ * Calculate milliseconds until the current schedule window ends
+ *
+ * @param schedule - The schedule to check
+ * @returns Milliseconds until end, or null if not within schedule
  */
 export function getMillisecondsUntilScheduleEnd(schedule: BlockerSchedule): number | null {
   if (!isWithinSchedule(schedule)) {
@@ -97,33 +123,33 @@ export function getMillisecondsUntilScheduleEnd(schedule: BlockerSchedule): numb
   const currentSeconds = now.getSeconds();
   const currentTimeInMinutes = currentHours * 60 + currentMinutes;
 
-  const [endHours, endMinutes] = schedule.endTime.split(':').map(Number);
-  const endTimeInMinutes = endHours * 60 + endMinutes;
+  const startTimeInMinutes = timeToMinutes(schedule.startTime);
+  const endTimeInMinutes = timeToMinutes(schedule.endTime);
 
-  const [startHours, startMinutes] = schedule.startTime.split(':').map(Number);
-  const startTimeInMinutes = startHours * 60 + startMinutes;
-
-  // Случай перехода через полночь
+  // Handle schedules that cross midnight
   if (startTimeInMinutes > endTimeInMinutes) {
     if (currentTimeInMinutes >= startTimeInMinutes) {
-      // Мы после начала, но до полуночи - считаем до конца следующего дня
+      // After start, before midnight
       const minutesUntilMidnight = 24 * 60 - currentTimeInMinutes;
       const minutesUntilEnd = minutesUntilMidnight + endTimeInMinutes;
       return (minutesUntilEnd * 60 - currentSeconds) * 1000;
     } else {
-      // Мы после полуночи, но до конца
+      // After midnight, before end
       const minutesUntilEnd = endTimeInMinutes - currentTimeInMinutes;
       return (minutesUntilEnd * 60 - currentSeconds) * 1000;
     }
   }
 
-  // Обычный случай
+  // Normal case
   const minutesUntilEnd = endTimeInMinutes - currentTimeInMinutes;
   return (minutesUntilEnd * 60 - currentSeconds) * 1000;
 }
 
 /**
- * Форматирует оставшееся время до начала расписания
+ * Format time until schedule starts as human-readable string
+ *
+ * @param schedule - The schedule to check
+ * @returns Formatted string like "2h 30m" or "1d 4h"
  */
 export function formatTimeUntilStart(schedule: BlockerSchedule): string {
   const ms = getMillisecondsUntilScheduleStart(schedule);

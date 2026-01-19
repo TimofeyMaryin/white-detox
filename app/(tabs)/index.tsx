@@ -1,3 +1,15 @@
+/**
+ * Home Screen
+ *
+ * Main screen displaying the blocking timer and schedule management.
+ *
+ * @module app/(tabs)/index
+ */
+
+import { router } from 'expo-router';
+import React, { useCallback } from 'react';
+import { Alert, Platform, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
+
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { TimeDial } from '@/components/time-dial';
@@ -5,225 +17,49 @@ import { TopBar } from '@/components/top-bar';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { Colors } from '@/constants/theme';
 import { useBlocker } from '@/contexts/blocker-context';
-import ScreenTimeModule from '@/modules/screen-time';
-import FamilyActivityPickerModule from '@/modules/family-activity-picker';
-import adaptyService from '@/services/adapty-service';
-import { isWithinSchedule, getMillisecondsUntilScheduleStart, getMillisecondsUntilScheduleEnd, formatTimeUntilStart } from '@/utils/scheduleUtils';
-import { router } from 'expo-router';
-import React, { useEffect, useState, useRef, useCallback } from 'react';
-import { Alert, AppState, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
+import { usePremium } from '@/hooks/use-premium';
+import { useScheduleStatus } from '@/hooks/use-schedule-status';
+import deviceActivityService from '@/services/device-activity.service';
+import { BlockerSchedule, DAY_NAMES } from '@/types/blocker';
+import { AuthorizationStatus } from 'react-native-device-activity';
+
+// ============================================================================
+// Main Component
+// ============================================================================
 
 export default function HomeScreen() {
-  const { state, startBlocking, stopBlocking, schedules, deleteSchedule } = useBlocker();
-  const [hasPremium, setHasPremium] = useState(false);
-  const [scheduleStatus, setScheduleStatus] = useState<'active' | 'waiting' | 'inactive'>('inactive');
-  const [timeUntilStart, setTimeUntilStart] = useState<string>('');
-  const scheduleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const checkIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const {
+    state,
+    schedules,
+    startBlocking,
+    stopBlocking,
+    deleteSchedule,
+    authorizationStatus,
+    requestAuthorization,
+  } = useBlocker();
 
-  console.log('[DETOX_DEBUG] HomeScreen: Rendering');
-  console.log('[DETOX_DEBUG] HomeScreen: schedules count:', schedules.length);
-  console.log('[DETOX_DEBUG] HomeScreen: schedules:', JSON.stringify(schedules, null, 2));
+  const { hasPremium } = usePremium();
+  const activeSchedule = schedules.find(
+    (s) => (s.familyActivitySelectionId || s.apps?.length) && s.isActive
+  );
+  const { status: scheduleStatus, timeUntilStart } = useScheduleStatus(activeSchedule);
 
   // Check if there are any active apps to block
-  const hasActiveApps = schedules.some(schedule => schedule.apps.length > 0 && schedule.isActive);
-  console.log('[DETOX_DEBUG] HomeScreen: hasActiveApps:', hasActiveApps);
+  const hasActiveApps = Boolean(activeSchedule);
 
-  // Check premium status
-  useEffect(() => {
-    const checkPremium = async () => {
-      try {
-        // Wait a bit to ensure Adapty is initialized
-        await new Promise(resolve => setTimeout(resolve, 300));
-        const isPremium = await adaptyService.hasActiveSubscription();
-        setHasPremium(isPremium);
-      } catch (error: any) {
-        // Don't log errors about undefined - Adapty might not be ready yet
-        if (!error?.message?.includes('undefined') && !error?.message?.includes('getProfile')) {
-          console.error('Error checking premium status:', error);
-        }
-      }
-    };
-    checkPremium();
+  // --------------------------------------------------------------------------
+  // Event Handlers
+  // --------------------------------------------------------------------------
 
-    // Subscribe to profile updates from Adapty service
-    const unsubscribe = adaptyService.onProfileUpdate(() => {
-      checkPremium();
+  const handlePremiumPress = useCallback(() => {
+    router.push({
+      pathname: '/paywall',
+      params: { placement: 'pw_main' },
     });
-
-    // Re-check when app becomes active (after purchase)
-    const subscription = AppState.addEventListener('change', (nextAppState) => {
-      if (nextAppState === 'active') {
-        // Check immediately, then again after a delay
-        checkPremium();
-        setTimeout(() => {
-          checkPremium();
-        }, 1000);
-      }
-    });
-
-    return () => {
-      subscription.remove();
-      unsubscribe();
-    };
   }, []);
 
-  // Функция для применения блокировки с проверкой авторизации
-  const applyBlocking = useCallback(async (schedule: typeof schedules[0]) => {
-    console.log('[DETOX_DEBUG] applyBlocking: Applying blocking for schedule:', schedule.id);
-    
-    try {
-      if (ScreenTimeModule && typeof ScreenTimeModule.isAuthorized === 'function') {
-        const isAuthorized = await ScreenTimeModule.isAuthorized();
-        if (!isAuthorized) {
-          console.log('[DETOX_DEBUG] applyBlocking: Not authorized, skipping');
-          return false;
-        }
-
-        // Load saved selection for this schedule
-        if (FamilyActivityPickerModule && typeof FamilyActivityPickerModule.loadSavedSelectionForScheduleId === 'function') {
-          const loadedApps = await FamilyActivityPickerModule.loadSavedSelectionForScheduleId(schedule.id);
-          if (loadedApps.length === 0 && schedule.apps.length > 0) {
-            console.log('[DETOX_DEBUG] applyBlocking: Tokens lost, cannot auto-block');
-            return false;
-          }
-        }
-
-        // Block apps
-        const blocked = await ScreenTimeModule.blockApps([]);
-        if (blocked) {
-          console.log('[DETOX_DEBUG] applyBlocking: Apps blocked successfully');
-          startBlocking();
-          return true;
-        }
-      }
-    } catch (error) {
-      console.error('[DETOX_DEBUG] applyBlocking: Error:', error);
-    }
-    return false;
-  }, [startBlocking]);
-
-  // Функция для снятия блокировки
-  const removeBlocking = useCallback(async () => {
-    console.log('[DETOX_DEBUG] removeBlocking: Removing blocking');
-    try {
-      if (ScreenTimeModule && typeof ScreenTimeModule.unblockApps === 'function') {
-        await ScreenTimeModule.unblockApps([]);
-      }
-      stopBlocking();
-    } catch (error) {
-      console.error('[DETOX_DEBUG] removeBlocking: Error:', error);
-    }
-  }, [stopBlocking]);
-
-  // Проверка и управление блокировкой по расписанию
-  const checkAndManageSchedule = useCallback(async () => {
-    const activeSchedule = schedules.find(s => s.apps.length > 0 && s.isActive);
-    
-    if (!activeSchedule) {
-      setScheduleStatus('inactive');
-      setTimeUntilStart('');
-      return;
-    }
-
-    const withinSchedule = isWithinSchedule(activeSchedule);
-    console.log('[DETOX_DEBUG] checkAndManageSchedule: withinSchedule:', withinSchedule, 'isBlocking:', state.isBlocking);
-
-    if (withinSchedule) {
-      setScheduleStatus('active');
-      setTimeUntilStart('');
-      
-      // Если мы в расписании, но блокировка не активна - включить её
-      if (!state.isBlocking) {
-        console.log('[DETOX_DEBUG] checkAndManageSchedule: Within schedule, starting blocking');
-        await applyBlocking(activeSchedule);
-      }
-
-      // Установить таймер на окончание расписания
-      const msUntilEnd = getMillisecondsUntilScheduleEnd(activeSchedule);
-      if (msUntilEnd !== null && msUntilEnd > 0) {
-        console.log('[DETOX_DEBUG] checkAndManageSchedule: Setting timer for end in', msUntilEnd, 'ms');
-        if (scheduleTimerRef.current) {
-          clearTimeout(scheduleTimerRef.current);
-        }
-        scheduleTimerRef.current = setTimeout(() => {
-          console.log('[DETOX_DEBUG] Schedule ended, removing blocking');
-          removeBlocking();
-          checkAndManageSchedule(); // Перепроверить для следующего окна
-        }, msUntilEnd);
-      }
-    } else {
-      setScheduleStatus('waiting');
-      
-      // Если мы вне расписания, но блокировка активна - выключить её
-      if (state.isBlocking) {
-        console.log('[DETOX_DEBUG] checkAndManageSchedule: Outside schedule, stopping blocking');
-        await removeBlocking();
-      }
-
-      // Обновить время до начала
-      const formattedTime = formatTimeUntilStart(activeSchedule);
-      setTimeUntilStart(formattedTime);
-
-      // Установить таймер на начало расписания
-      const msUntilStart = getMillisecondsUntilScheduleStart(activeSchedule);
-      if (msUntilStart !== null && msUntilStart > 0) {
-        console.log('[DETOX_DEBUG] checkAndManageSchedule: Setting timer for start in', msUntilStart, 'ms');
-        if (scheduleTimerRef.current) {
-          clearTimeout(scheduleTimerRef.current);
-        }
-        scheduleTimerRef.current = setTimeout(() => {
-          console.log('[DETOX_DEBUG] Schedule started, applying blocking');
-          checkAndManageSchedule();
-        }, msUntilStart);
-      }
-    }
-  }, [schedules, state.isBlocking, applyBlocking, removeBlocking]);
-
-  // Эффект для автоматического управления блокировкой по расписанию
-  useEffect(() => {
-    // Проверить расписание при загрузке и при изменении расписаний
-    checkAndManageSchedule();
-
-    // Обновлять время до начала каждую минуту
-    checkIntervalRef.current = setInterval(() => {
-      const activeSchedule = schedules.find(s => s.apps.length > 0 && s.isActive);
-      if (activeSchedule && !isWithinSchedule(activeSchedule)) {
-        const formattedTime = formatTimeUntilStart(activeSchedule);
-        setTimeUntilStart(formattedTime);
-      }
-    }, 60000);
-
-    return () => {
-      if (scheduleTimerRef.current) {
-        clearTimeout(scheduleTimerRef.current);
-      }
-      if (checkIntervalRef.current) {
-        clearInterval(checkIntervalRef.current);
-      }
-    };
-  }, [schedules, checkAndManageSchedule]);
-
-  // Перепроверить расписание когда приложение выходит на передний план
-  useEffect(() => {
-    const subscription = AppState.addEventListener('change', (nextAppState) => {
-      if (nextAppState === 'active') {
-        console.log('[DETOX_DEBUG] App became active, checking schedule');
-        checkAndManageSchedule();
-      }
-    });
-
-    return () => subscription.remove();
-  }, [checkAndManageSchedule]);
-
-  const handleStartBlocking = async () => {
-    console.log('[DETOX_DEBUG] HomeScreen.handleStartBlocking: Called');
-    console.log('[DETOX_DEBUG] HomeScreen.handleStartBlocking: hasActiveApps:', hasActiveApps);
-    console.log('[DETOX_DEBUG] HomeScreen.handleStartBlocking: schedules:', JSON.stringify(schedules, null, 2));
-    
-    // Check if there are active apps to block
-    if (!hasActiveApps) {
-      console.log('[DETOX_DEBUG] HomeScreen.handleStartBlocking: No active apps, showing alert');
+  const handleStartBlocking = useCallback(async () => {
+    if (!hasActiveApps || !activeSchedule) {
       Alert.alert(
         'No Apps Selected',
         'Please create a blocking schedule with at least one app before starting the timer.',
@@ -232,23 +68,10 @@ export default function HomeScreen() {
       return;
     }
 
-    // Get the active schedule
-    const activeSchedule = schedules.find(s => s.apps.length > 0 && s.isActive);
-    console.log('[DETOX_DEBUG] HomeScreen.handleStartBlocking: activeSchedule:', JSON.stringify(activeSchedule, null, 2));
-    if (!activeSchedule) {
-      console.log('[DETOX_DEBUG] HomeScreen.handleStartBlocking: No active schedule found');
-      Alert.alert(
-        'No Active Schedule',
-        'Please create an active schedule with apps to block.',
-        [{ text: 'OK' }]
-      );
-      return;
-    }
-
-    // Проверяем, попадает ли текущее время в расписание
+    // Check if we're within schedule time
+    const { isWithinSchedule, formatTimeUntilStart } = await import('@/utils/scheduleUtils');
     const withinSchedule = isWithinSchedule(activeSchedule);
-    console.log('[DETOX_DEBUG] HomeScreen.handleStartBlocking: withinSchedule:', withinSchedule);
-    
+
     if (!withinSchedule) {
       const timeUntil = formatTimeUntilStart(activeSchedule);
       Alert.alert(
@@ -266,21 +89,17 @@ export default function HomeScreen() {
     }
 
     await startBlockingImmediately(activeSchedule);
-  };
+  }, [hasActiveApps, activeSchedule]);
 
-  const startBlockingImmediately = async (activeSchedule: typeof schedules[0]) => {
+  const startBlockingImmediately = async (schedule: BlockerSchedule) => {
     try {
-      // Check if native module is available
-      if (ScreenTimeModule && typeof ScreenTimeModule.isAuthorized === 'function') {
-        console.log('[DETOX_DEBUG] HomeScreen.startBlockingImmediately: Checking authorization');
-        const isAuthorized = await ScreenTimeModule.isAuthorized();
-        console.log('[DETOX_DEBUG] HomeScreen.startBlockingImmediately: isAuthorized:', isAuthorized);
-        if (!isAuthorized) {
-          // Request authorization
-          console.log('[DETOX_DEBUG] HomeScreen.startBlockingImmediately: Requesting authorization');
-          const authorized = await ScreenTimeModule.requestAuthorization();
-          console.log('[DETOX_DEBUG] HomeScreen.startBlockingImmediately: Authorization result:', authorized);
-          if (!authorized) {
+      if (Platform.OS === 'ios' && deviceActivityService.isAvailable()) {
+        // Check authorization
+        if (authorizationStatus !== AuthorizationStatus.approved) {
+          await requestAuthorization();
+
+          const newStatus = deviceActivityService.getAuthorizationStatus();
+          if (newStatus !== AuthorizationStatus.approved) {
             Alert.alert(
               'Authorization Required',
               'Screen Time authorization is required to block apps. Please grant permission in Settings.',
@@ -290,106 +109,33 @@ export default function HomeScreen() {
           }
         }
 
-        // First, try to load the saved selection for this schedule
-        // This restores the globalActivitySelection from cached storage
-        let loadedApps: string[] = [];
-        if (FamilyActivityPickerModule && typeof FamilyActivityPickerModule.loadSavedSelectionForScheduleId === 'function') {
-          try {
-            console.log('[DETOX_DEBUG] HomeScreen.startBlockingImmediately: Loading saved selection for schedule:', activeSchedule.id);
-            loadedApps = await FamilyActivityPickerModule.loadSavedSelectionForScheduleId(activeSchedule.id);
-            console.log('[DETOX_DEBUG] HomeScreen.startBlockingImmediately: Loaded apps:', loadedApps);
-          } catch (loadError) {
-            console.warn('[DETOX_DEBUG] HomeScreen.startBlockingImmediately: Could not load saved selection:', loadError);
-          }
-        }
-
-        // Check if tokens were lost after app restart
-        // schedule.apps has identifiers but native tokens are gone
-        console.log('[DETOX_DEBUG] HomeScreen.startBlockingImmediately: activeSchedule.apps.length:', activeSchedule.apps.length, 'loadedApps.length:', loadedApps.length);
-        if (activeSchedule.apps.length > 0 && loadedApps.length === 0) {
-          console.log('[DETOX_DEBUG] HomeScreen.startBlockingImmediately: Tokens lost after restart, showing alert');
+        // Check if we have a selection
+        if (!schedule.familyActivitySelectionId) {
           Alert.alert(
-            'Apps Need Re-selection',
-            'Due to iOS security restrictions, app tokens are lost after app restart. Please re-select the apps you want to block.',
+            'No Apps Selected',
+            'Please select apps in your schedule before starting blocking.',
             [
               { text: 'Cancel', style: 'cancel' },
               {
                 text: 'Select Apps',
-                onPress: () => {
-                  router.push(`/modal?type=schedule&scheduleId=${activeSchedule.id}`);
-                },
+                onPress: () => router.push(`/modal?type=schedule&scheduleId=${schedule.id}`),
               },
             ]
           );
           return;
         }
 
-        // Block apps using ScreenTime API
-        // The selection is now loaded into globalActivitySelection
-        console.log('[DETOX_DEBUG] HomeScreen.startBlockingImmediately: Calling ScreenTimeModule.blockApps');
-        const blocked = await ScreenTimeModule.blockApps([]);
-        console.log('[DETOX_DEBUG] HomeScreen.startBlockingImmediately: blockApps result:', blocked);
-        
-        if (!blocked) {
-          console.log('[DETOX_DEBUG] HomeScreen.startBlockingImmediately: Blocking failed');
-          Alert.alert(
-            'Blocking Failed',
-            'Could not block apps. Please make sure you have selected apps in your schedule.',
-            [
-              { text: 'OK' },
-              {
-                text: 'Select Apps',
-                onPress: () => {
-                  router.push(`/modal?type=schedule&scheduleId=${activeSchedule.id}`);
-                },
-              },
-            ]
-          );
-          return;
-        }
+        // Block apps
+        deviceActivityService.blockApps(schedule.familyActivitySelectionId);
       }
-      
-      // Start blocking state
-      console.log('[DETOX_DEBUG] HomeScreen.startBlockingImmediately: Starting blocking state');
-      startBlocking();
+
+      startBlocking(schedule.id);
     } catch (error: any) {
-      console.error('Error starting blocking:', error);
-      
-      // Handle specific error cases
-      if (error?.code === 'NOT_AUTHORIZED') {
-        Alert.alert(
-          'Authorization Required',
-          'Screen Time authorization is required to block apps. Please grant permission in Settings.',
-          [{ text: 'OK' }]
-        );
-        return;
-      }
-      
-      if (error?.code === 'NO_SELECTION' || error?.message?.includes('No apps selected')) {
-        Alert.alert(
-          'No Apps Selected',
-          'Please select apps in your schedule before starting blocking. The app selection needs to be recent.',
-          [
-            { text: 'Cancel', style: 'cancel' },
-            {
-              text: 'Select Apps',
-              onPress: () => {
-                if (schedules.length > 0) {
-                  router.push(`/modal?type=schedule&scheduleId=${schedules[0].id}`);
-                } else {
-                  router.push('/modal?type=schedule');
-                }
-              },
-            },
-          ]
-        );
-        return;
-      }
-      
-      // For development: continue with blocking even if Screen Time API is not available
+      console.error('[HomeScreen] Error starting blocking:', error);
+
       if (__DEV__) {
         console.warn('Continuing with blocking state only (Screen Time API not available)');
-        startBlocking();
+        startBlocking(schedule.id);
       } else {
         Alert.alert(
           'Blocking Failed',
@@ -400,46 +146,109 @@ export default function HomeScreen() {
     }
   };
 
-  const handleStopBlocking = async () => {
-    Alert.alert(
-      'Stop Blocking',
-      'Do you want to stop blocking apps?',
-      [
+  const handleStopBlocking = useCallback(() => {
+    Alert.alert('Stop Blocking', 'Do you want to stop blocking apps?', [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Stop',
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            if (Platform.OS === 'ios' && deviceActivityService.isAvailable()) {
+              deviceActivityService.unblockAllApps();
+            }
+          } catch (error) {
+            console.error('[HomeScreen] Error unblocking:', error);
+          }
+          stopBlocking();
+        },
+      },
+    ]);
+  }, [stopBlocking]);
+
+  const handleDeleteSchedule = useCallback(
+    (schedule: BlockerSchedule) => {
+      Alert.alert('Delete Schedule', `Are you sure you want to delete "${schedule.name}"?`, [
         { text: 'Cancel', style: 'cancel' },
         {
-          text: 'Stop',
+          text: 'Delete',
           style: 'destructive',
           onPress: async () => {
-            try {
-              if (ScreenTimeModule && typeof ScreenTimeModule.unblockApps === 'function') {
-                await ScreenTimeModule.unblockApps([]);
+            if (state.isBlocking) {
+              try {
+                if (Platform.OS === 'ios' && deviceActivityService.isAvailable()) {
+                  deviceActivityService.unblockAllApps();
+                }
+              } catch (error) {
+                console.error('[HomeScreen] Error clearing blocks:', error);
               }
-            } catch (error) {
-              console.error('Error unblocking apps:', error);
+              stopBlocking();
             }
-            stopBlocking();
+            deleteSchedule(schedule.id);
           },
         },
-      ]
-    );
+      ]);
+    },
+    [state.isBlocking, stopBlocking, deleteSchedule]
+  );
+
+  // --------------------------------------------------------------------------
+  // Render Helpers
+  // --------------------------------------------------------------------------
+
+  const getAppCount = (schedule: BlockerSchedule): string | null => {
+    if (schedule.familyActivitySelectionId) {
+      return 'Apps selected';
+    }
+    if (schedule.apps?.length) {
+      return `${schedule.apps.length} app${schedule.apps.length !== 1 ? 's' : ''} selected`;
+    }
+    return null;
   };
 
-  const handlePremiumPress = () => {
-    router.push({
-      pathname: '/paywall',
-      params: { placement: 'pw_main' },
-    });
+  const renderScheduleStatus = (schedule: BlockerSchedule) => {
+    const hasApps = Boolean(schedule.familyActivitySelectionId || schedule.apps?.length);
+
+    if (!hasApps || state.isBlocking) return null;
+
+    if (scheduleStatus === 'active') {
+      return (
+        <View style={styles.scheduleStatusContainer}>
+          <View style={styles.scheduleStatusBadge}>
+            <View style={[styles.statusDot, styles.statusDotActive]} />
+            <ThemedText style={styles.scheduleStatusText}>Schedule active now</ThemedText>
+          </View>
+        </View>
+      );
+    }
+
+    if (scheduleStatus === 'waiting' && timeUntilStart) {
+      return (
+        <View style={styles.scheduleStatusContainer}>
+          <View style={styles.scheduleStatusBadge}>
+            <View style={[styles.statusDot, styles.statusDotWaiting]} />
+            <ThemedText style={styles.scheduleStatusText}>Starts in {timeUntilStart}</ThemedText>
+          </View>
+        </View>
+      );
+    }
+
+    return null;
   };
+
+  // --------------------------------------------------------------------------
+  // Render
+  // --------------------------------------------------------------------------
 
   return (
     <ThemedView style={styles.container}>
       {!hasPremium && <TopBar onPremiumPress={handlePremiumPress} />}
-      <ScrollView style={styles.scrollView} contentContainerStyle={styles.content}>
 
-        {/* Time Dial */}
+      <ScrollView style={styles.scrollView} contentContainerStyle={styles.content}>
+        {/* Timer Display */}
         <TimeDial savedTime={state.savedTime} />
 
-        {/* Control Buttons - Only shown when blocking is active */}
+        {/* Stop Button (when blocking) */}
         {state.isBlocking && (
           <View style={styles.controls}>
             <TouchableOpacity
@@ -452,7 +261,7 @@ export default function HomeScreen() {
           </View>
         )}
 
-        {/* Schedule Management - Only one schedule allowed */}
+        {/* Schedule Section */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <ThemedText type="subtitle">Blocking Schedule</ThemedText>
@@ -472,111 +281,82 @@ export default function HomeScreen() {
               </TouchableOpacity>
             )}
           </View>
+
           <ThemedText style={styles.sectionDescription}>
             Create a schedule to automatically block specific apps at scheduled times
           </ThemedText>
+
           {schedules.length > 0 ? (
-            schedules.slice(0, 1).map((schedule) => (
-              <View key={schedule.id} style={styles.scheduleCard}>
-                <TouchableOpacity
-                  style={styles.scheduleItem}
-                  onPress={() => router.push(`/modal?type=schedule&scheduleId=${schedule.id}`)}
-                >
-                  <View style={styles.scheduleItemContent}>
-                    <ThemedText style={styles.scheduleName}>{schedule.name}</ThemedText>
-                    <ThemedText style={styles.scheduleTime}>
-                      {schedule.startTime} - {schedule.endTime}
-                    </ThemedText>
-                    {schedule.daysOfWeek.length > 0 && (
-                      <ThemedText style={styles.scheduleDays}>
-                        {schedule.daysOfWeek.map(d => ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][d]).join(', ')}
-                      </ThemedText>
-                    )}
-                    {schedule.apps.length > 0 ? (
-                      <ThemedText style={styles.scheduleApps}>
-                        {schedule.apps.length} app{schedule.apps.length !== 1 ? 's' : ''} selected
-                      </ThemedText>
-                    ) : (
-                      <ThemedText style={styles.scheduleAppsWarning}>
-                        No apps selected - please add apps to enable blocking
-                      </ThemedText>
-                    )}
-                    {/* Статус расписания */}
-                    {schedule.apps.length > 0 && !state.isBlocking && (
-                      <View style={styles.scheduleStatusContainer}>
-                        {scheduleStatus === 'active' ? (
-                          <View style={styles.scheduleStatusBadge}>
-                            <View style={[styles.statusDot, styles.statusDotActive]} />
-                            <ThemedText style={styles.scheduleStatusText}>
-                              Schedule active now
-                            </ThemedText>
-                          </View>
-                        ) : scheduleStatus === 'waiting' && timeUntilStart ? (
-                          <View style={styles.scheduleStatusBadge}>
-                            <View style={[styles.statusDot, styles.statusDotWaiting]} />
-                            <ThemedText style={styles.scheduleStatusText}>
-                              Starts in {timeUntilStart}
-                            </ThemedText>
-                          </View>
-                        ) : null}
-                      </View>
-                    )}
-                  </View>
+            schedules.slice(0, 1).map((schedule) => {
+              const appCount = getAppCount(schedule);
+              const hasApps = Boolean(
+                schedule.familyActivitySelectionId || schedule.apps?.length
+              );
+
+              return (
+                <View key={schedule.id} style={styles.scheduleCard}>
                   <TouchableOpacity
-                    onPress={(e) => {
-                      e.stopPropagation();
-                      Alert.alert(
-                        'Delete Schedule',
-                        `Are you sure you want to delete "${schedule.name}"?`,
-                        [
-                          { text: 'Cancel', style: 'cancel' },
-                          {
-                            text: 'Delete',
-                            style: 'destructive',
-                            onPress: async () => {
-                              // Остановить таймер и разблокировать приложения, если блокировка активна
-                              if (state.isBlocking) {
-                                try {
-                                  if (ScreenTimeModule && typeof ScreenTimeModule.clearAllBlockingSettings === 'function') {
-                                    await ScreenTimeModule.clearAllBlockingSettings();
-                                  }
-                                } catch (error) {
-                                  console.error('Error clearing blocking settings:', error);
-                                }
-                                stopBlocking();
-                              }
-                              deleteSchedule(schedule.id);
-                            },
-                          },
-                        ]
-                      );
-                    }}
+                    style={styles.scheduleItem}
+                    onPress={() => router.push(`/modal?type=schedule&scheduleId=${schedule.id}`)}
                   >
-                    <IconSymbol name="trash.fill" size={20} color="#FF3B30" />
+                    <View style={styles.scheduleItemContent}>
+                      <ThemedText style={styles.scheduleName}>{schedule.name}</ThemedText>
+                      <ThemedText style={styles.scheduleTime}>
+                        {schedule.startTime} - {schedule.endTime}
+                      </ThemedText>
+                      {schedule.daysOfWeek.length > 0 && (
+                        <ThemedText style={styles.scheduleDays}>
+                          {schedule.daysOfWeek.map((d) => DAY_NAMES[d]).join(', ')}
+                        </ThemedText>
+                      )}
+                      {appCount ? (
+                        <ThemedText style={styles.scheduleApps}>{appCount}</ThemedText>
+                      ) : (
+                        <ThemedText style={styles.scheduleAppsWarning}>
+                          No apps selected - please add apps to enable blocking
+                        </ThemedText>
+                      )}
+                      {renderScheduleStatus(schedule)}
+                    </View>
+
+                    <TouchableOpacity
+                      onPress={(e) => {
+                        e.stopPropagation();
+                        handleDeleteSchedule(schedule);
+                      }}
+                    >
+                      <IconSymbol name="trash.fill" size={20} color="#FF3B30" />
+                    </TouchableOpacity>
                   </TouchableOpacity>
-                </TouchableOpacity>
-                
-                {/* Play button to start blocking */}
-                {!state.isBlocking && (
-                  <TouchableOpacity
-                    style={[styles.playButton, schedule.apps.length === 0 && styles.playButtonDisabled]}
-                    onPress={handleStartBlocking}
-                    disabled={schedule.apps.length === 0}
-                  >
-                    <IconSymbol name="play.fill" size={20} color="#000" />
-                    <ThemedText style={styles.playButtonText}>Start Blocking</ThemedText>
-                  </TouchableOpacity>
-                )}
-              </View>
-            ))
+
+                  {/* Start Button */}
+                  {!state.isBlocking && (
+                    <TouchableOpacity
+                      style={[styles.playButton, !hasApps && styles.playButtonDisabled]}
+                      onPress={handleStartBlocking}
+                      disabled={!hasApps}
+                    >
+                      <IconSymbol name="play.fill" size={20} color="#000" />
+                      <ThemedText style={styles.playButtonText}>Start Blocking</ThemedText>
+                    </TouchableOpacity>
+                  )}
+                </View>
+              );
+            })
           ) : (
-            <ThemedText style={styles.emptyState}>No schedule created yet. Tap + to create one.</ThemedText>
+            <ThemedText style={styles.emptyState}>
+              No schedule created yet. Tap + to create one.
+            </ThemedText>
           )}
         </View>
       </ScrollView>
-      </ThemedView>
+    </ThemedView>
   );
 }
+
+// ============================================================================
+// Styles
+// ============================================================================
 
 const styles = StyleSheet.create({
   container: {
@@ -602,12 +382,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     borderRadius: 12,
     gap: 8,
-  },
-  startButton: {
-    backgroundColor: Colors.dark.primary,
-  },
-  buttonDisabled: {
-    opacity: 0.5,
   },
   stopButton: {
     backgroundColor: '#FF3B30',

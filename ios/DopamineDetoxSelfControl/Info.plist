@@ -53,6 +53,8 @@
     </array>
     <key>RCTNewArchEnabled</key>
     <true/>
+    <key>REACT_NATIVE_DEVICE_ACTIVITY_APP_GROUP</key>
+    <string>$(REACT_NATIVE_DEVICE_ACTIVITY_APP_GROUP)</string>
     <key>UILaunchStoryboardName</key>
     <string>SplashScreen</string>
     <key>UIRequiredDeviceCapabilities</key>

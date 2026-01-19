@@ -7,81 +7,185 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		03B888049E094238A8B607A5 /* ManagedSettings.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E0AD2F9C06CF42F1AAA8C61B /* ManagedSettings.framework */; };
-		1172583D905E41978D1440F0 /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 19E40186129741FAB45C304A /* SwiftUI.framework */; };
+		01EB108AE08B43A9BE80799E /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 14485B0750224FD091404516 /* GoogleService-Info.plist */; };
 		13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB51A68108700A75B9A /* Images.xcassets */; };
+		2EDECF8ABD13D41708E42413 /* Pods_DopamineDetoxSelfControl.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D6F374C50BF848F5695613AA /* Pods_DopamineDetoxSelfControl.framework */; };
 		3E461D99554A48A4959DE609 /* SplashScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */; };
-		6AFE0B74C6BD42A1B190E3D6 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 29081AF107A54D24BEBD46EB /* GoogleService-Info.plist */; };
-		6B01DAA006A241879D481CE0 /* ScreenTimeReportExtension.appex in Copy Files */ = {isa = PBXBuildFile; fileRef = EEAE5C3956EB45A6A73FB493 /* ScreenTimeReportExtension.appex */; };
-		A0355E1C938EC158C29D9BF0 /* Pods_DopamineDetoxSelfControl.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 2C670D69DFFAE5BF2D3BF691 /* Pods_DopamineDetoxSelfControl.framework */; };
-		B5EF42D008534CB0BA4F8D98 /* DeviceActivity.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 6F7688AB14DD4DF2979A22FA /* DeviceActivity.framework */; };
-		B87F6C8A47CDC6EE1F174727 /* ExpoModulesProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0E0785D1671AB4B759CD8103 /* ExpoModulesProvider.swift */; };
 		BB2F792D24A3F905000567C9 /* Expo.plist in Resources */ = {isa = PBXBuildFile; fileRef = BB2F792C24A3F905000567C9 /* Expo.plist */; };
-		C3286E94F5654BD892739E77 /* FamilyControls.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF51028A1EF7475E8410A6BB /* FamilyControls.framework */; };
-		E3F3EF45AA7768FED708263C /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 1CA73DE4473182263E515347 /* PrivacyInfo.xcprivacy */; };
+		C1DF0BA7102ACF33CC8B1E2E /* ExpoModulesProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7DA5CA9A1781CCB3DD6D4390 /* ExpoModulesProvider.swift */; };
 		F11748422D0307B40044C1D9 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = F11748412D0307B40044C1D9 /* AppDelegate.swift */; };
+		F8A02323537A05955D2B9005 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 2EB6ADD1717152C74B7DCC33 /* PrivacyInfo.xcprivacy */; };
+		XX103037AC5A7B821341EBXX /* ShieldConfiguration.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = XXEC8F4A23169846583657XX /* ShieldConfiguration.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		XX44FC18D28196FBCB6075XX /* ManagedSettingsUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = XXB6D82409997898620841XX /* ManagedSettingsUI.framework */; };
+		XXBEFFB36AB412820C306DXX /* ShieldAction.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = XX05E83E103BF49F57A457XX /* ShieldAction.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		XXD33E402502F114432AD3XX /* DeviceActivity.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = XXCA68A9416C78B970D1D9XX /* DeviceActivity.framework */; };
+		XXE5C6ED1B941143A02B1EXX /* ActivityMonitorExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = XX7DDE620121E0E26B18E0XX /* ActivityMonitorExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 /* End PBXBuildFile section */
 
+/* Begin PBXContainerItemProxy section */
+		XX2AF4E4DEB5BECD158CADXX /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 83CBB9F71A601CBA00E9B192 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = XXA39567948BA18CFAAEA1XX;
+			remoteInfo = ShieldAction;
+		};
+		XX3043BDA0811681D4E69FXX /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 83CBB9F71A601CBA00E9B192 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = XXB230451AF9348995A9CEXX;
+			remoteInfo = ShieldConfiguration;
+		};
+		XXFD660248A30EB6AB2E1BXX /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 83CBB9F71A601CBA00E9B192 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = XX062527CBC23F2C0427A9XX;
+			remoteInfo = ActivityMonitorExtension;
+		};
+/* End PBXContainerItemProxy section */
+
 /* Begin PBXCopyFilesBuildPhase section */
-		A51077AA498E4434A68A2795 /* Copy Files */ = {
+		XX72A8CFBF0FBA13A79902XX /* Embed Foundation Extensions */ = {
 			isa = PBXCopyFilesBuildPhase;
 			buildActionMask = 2147483647;
 			dstPath = "";
 			dstSubfolderSpec = 13;
 			files = (
-				6B01DAA006A241879D481CE0 /* ScreenTimeReportExtension.appex in Copy Files */,
+				XXE5C6ED1B941143A02B1EXX /* ActivityMonitorExtension.appex in Embed Foundation Extensions */,
+				XXBEFFB36AB412820C306DXX /* ShieldAction.appex in Embed Foundation Extensions */,
+				XX103037AC5A7B821341EBXX /* ShieldConfiguration.appex in Embed Foundation Extensions */,
 			);
-			name = "Copy Files";
+			name = "Embed Foundation Extensions";
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
-		0E0785D1671AB4B759CD8103 /* ExpoModulesProvider.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ExpoModulesProvider.swift; path = "Pods/Target Support Files/Pods-DopamineDetoxSelfControl/ExpoModulesProvider.swift"; sourceTree = "<group>"; };
-		13B07F961A680F5B00A75B9A /* DopamineDetoxSelfControl.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = DopamineDetoxSelfControl.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		13B07FB51A68108700A75B9A /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Images.xcassets; path = DopamineDetoxSelfControl/Images.xcassets; sourceTree = "<group>"; };
-		13B07FB61A68108700A75B9A /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = Info.plist; path = DopamineDetoxSelfControl/Info.plist; sourceTree = "<group>"; };
-		19E40186129741FAB45C304A /* SwiftUI.framework */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = System/Library/Frameworks/SwiftUI.framework; sourceTree = SDKROOT; };
-		1CA73DE4473182263E515347 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; includeInIndex = 1; name = PrivacyInfo.xcprivacy; path = DopamineDetoxSelfControl/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
-		25695DEDE1444E6BB01B13B6 /* TotalActivityReport.swift */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 4; includeInIndex = 0; lastKnownFileType = sourcecode.swift; name = TotalActivityReport.swift; path = ScreenTimeReportExtension/TotalActivityReport.swift; sourceTree = "<group>"; };
-		26B001A831A34F1D95527A3F /* TotalActivityReport.swift */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 4; includeInIndex = 0; lastKnownFileType = sourcecode.swift; name = TotalActivityReport.swift; path = TotalActivityReport.swift; sourceTree = "<group>"; };
-		29081AF107A54D24BEBD46EB /* GoogleService-Info.plist */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 4; includeInIndex = 0; lastKnownFileType = text.plist.xml; name = "GoogleService-Info.plist"; path = "DopamineDetoxSelfControl/GoogleService-Info.plist"; sourceTree = "<group>"; };
-		2C670D69DFFAE5BF2D3BF691 /* Pods_DopamineDetoxSelfControl.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_DopamineDetoxSelfControl.framework; sourceTree = BUILT_PRODUCTS_DIR; };
-		4AA001B91DE64C64969876CF /* Info.plist */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 4; includeInIndex = 0; lastKnownFileType = text.plist.xml; name = Info.plist; path = Info.plist; sourceTree = "<group>"; };
-		626EE59E07904C1ABC7EA6A4 /* ScreenTimeReportExtension.entitlements */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = ScreenTimeReportExtension.entitlements; path = ScreenTimeReportExtension.entitlements; sourceTree = "<group>"; };
-		6F7688AB14DD4DF2979A22FA /* DeviceActivity.framework */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = wrapper.framework; name = DeviceActivity.framework; path = System/Library/Frameworks/DeviceActivity.framework; sourceTree = SDKROOT; };
-		7A9EF519F7892BDD44C379B9 /* Pods-DopamineDetoxSelfControl.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-DopamineDetoxSelfControl.release.xcconfig"; path = "Target Support Files/Pods-DopamineDetoxSelfControl/Pods-DopamineDetoxSelfControl.release.xcconfig"; sourceTree = "<group>"; };
-		7F32C8BB90124FC5BD12F5FA /* TotalActivityView.swift */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 4; includeInIndex = 0; lastKnownFileType = sourcecode.swift; name = TotalActivityView.swift; path = TotalActivityView.swift; sourceTree = "<group>"; };
-		8C67A12E14E54ABA9890B8AA /* ScreenTimeReportExtension.swift */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 4; includeInIndex = 0; lastKnownFileType = sourcecode.swift; name = ScreenTimeReportExtension.swift; path = ScreenTimeReportExtension/ScreenTimeReportExtension.swift; sourceTree = "<group>"; };
-		AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = SplashScreen.storyboard; path = DopamineDetoxSelfControl/SplashScreen.storyboard; sourceTree = "<group>"; };
-		AF51028A1EF7475E8410A6BB /* FamilyControls.framework */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = wrapper.framework; name = FamilyControls.framework; path = System/Library/Frameworks/FamilyControls.framework; sourceTree = SDKROOT; };
-		BB2F792C24A3F905000567C9 /* Expo.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Expo.plist; sourceTree = "<group>"; };
-		E0AD2F9C06CF42F1AAA8C61B /* ManagedSettings.framework */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = wrapper.framework; name = ManagedSettings.framework; path = System/Library/Frameworks/ManagedSettings.framework; sourceTree = SDKROOT; };
-		E31B10AB9CFA4D5FB98C5088 /* ScreenTimeReportExtension.swift */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 4; includeInIndex = 0; lastKnownFileType = sourcecode.swift; name = ScreenTimeReportExtension.swift; path = ScreenTimeReportExtension.swift; sourceTree = "<group>"; };
-		EA65142935864506B357F56D /* TotalActivityView.swift */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 4; includeInIndex = 0; lastKnownFileType = sourcecode.swift; name = TotalActivityView.swift; path = ScreenTimeReportExtension/TotalActivityView.swift; sourceTree = "<group>"; };
-		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
-		EEAE5C3956EB45A6A73FB493 /* ScreenTimeReportExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = undefined; name = ScreenTimeReportExtension.appex; path = ScreenTimeReportExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
-		F11748412D0307B40044C1D9 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AppDelegate.swift; path = DopamineDetoxSelfControl/AppDelegate.swift; sourceTree = "<group>"; };
-		F11748442D0722820044C1D9 /* DopamineDetoxSelfControl-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "DopamineDetoxSelfControl-Bridging-Header.h"; path = "DopamineDetoxSelfControl/DopamineDetoxSelfControl-Bridging-Header.h"; sourceTree = "<group>"; };
-		F36E795B0F1E6807B2516DF1 /* Pods-DopamineDetoxSelfControl.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-DopamineDetoxSelfControl.debug.xcconfig"; path = "Target Support Files/Pods-DopamineDetoxSelfControl/Pods-DopamineDetoxSelfControl.debug.xcconfig"; sourceTree = "<group>"; };
+		13B07F961A680F5B00A75B9A /* DopamineDetoxSelfControl.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; fileEncoding = 4; includeInIndex = 0; path = DopamineDetoxSelfControl.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		13B07FB51A68108700A75B9A /* Images.xcassets */ = {isa = PBXFileReference; fileEncoding = 4; includeInIndex = 0; lastKnownFileType = folder.assetcatalog; name = Images.xcassets; path = DopamineDetoxSelfControl/Images.xcassets; sourceTree = "<group>"; };
+		13B07FB61A68108700A75B9A /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; includeInIndex = 0; lastKnownFileType = text.plist.xml; name = Info.plist; path = DopamineDetoxSelfControl/Info.plist; sourceTree = "<group>"; };
+		14485B0750224FD091404516 /* GoogleService-Info.plist */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 4; includeInIndex = 0; lastKnownFileType = text.plist.xml; name = "GoogleService-Info.plist"; path = "DopamineDetoxSelfControl/GoogleService-Info.plist"; sourceTree = "<group>"; };
+		2EB6ADD1717152C74B7DCC33 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; includeInIndex = 1; name = PrivacyInfo.xcprivacy; path = DopamineDetoxSelfControl/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
+		7DA5CA9A1781CCB3DD6D4390 /* ExpoModulesProvider.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ExpoModulesProvider.swift; path = "Pods/Target Support Files/Pods-DopamineDetoxSelfControl/ExpoModulesProvider.swift"; sourceTree = "<group>"; };
+		A2483683EC726A3B775C4F97 /* Pods-DopamineDetoxSelfControl.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-DopamineDetoxSelfControl.debug.xcconfig"; path = "Target Support Files/Pods-DopamineDetoxSelfControl/Pods-DopamineDetoxSelfControl.debug.xcconfig"; sourceTree = "<group>"; };
+		AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; includeInIndex = 0; lastKnownFileType = file.storyboard; name = SplashScreen.storyboard; path = DopamineDetoxSelfControl/SplashScreen.storyboard; sourceTree = "<group>"; };
+		BB2F792C24A3F905000567C9 /* Expo.plist */ = {isa = PBXFileReference; fileEncoding = 4; includeInIndex = 0; lastKnownFileType = text.plist.xml; path = Expo.plist; sourceTree = "<group>"; };
+		D6F374C50BF848F5695613AA /* Pods_DopamineDetoxSelfControl.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_DopamineDetoxSelfControl.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; fileEncoding = 4; includeInIndex = undefined; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
+		F11748412D0307B40044C1D9 /* AppDelegate.swift */ = {isa = PBXFileReference; fileEncoding = 4; includeInIndex = 0; lastKnownFileType = sourcecode.swift; name = AppDelegate.swift; path = DopamineDetoxSelfControl/AppDelegate.swift; sourceTree = "<group>"; };
+		F11748442D0722820044C1D9 /* DopamineDetoxSelfControl-Bridging-Header.h */ = {isa = PBXFileReference; fileEncoding = 4; includeInIndex = 0; lastKnownFileType = sourcecode.c.h; name = "DopamineDetoxSelfControl-Bridging-Header.h"; path = "DopamineDetoxSelfControl/DopamineDetoxSelfControl-Bridging-Header.h"; sourceTree = "<group>"; };
+		F7B9385806D958E4050BC3A9 /* Pods-DopamineDetoxSelfControl.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-DopamineDetoxSelfControl.release.xcconfig"; path = "Target Support Files/Pods-DopamineDetoxSelfControl/Pods-DopamineDetoxSelfControl.release.xcconfig"; sourceTree = "<group>"; };
+		XX05E83E103BF49F57A457XX /* ShieldAction.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; fileEncoding = 4; includeInIndex = 0; path = ShieldAction.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		XX7DDE620121E0E26B18E0XX /* ActivityMonitorExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; fileEncoding = 4; includeInIndex = 0; path = ActivityMonitorExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		XXB6D82409997898620841XX /* ManagedSettingsUI.framework */ = {isa = PBXFileReference; fileEncoding = 4; includeInIndex = undefined; lastKnownFileType = wrapper.framework; name = ManagedSettingsUI.framework; path = System/Library/Frameworks/ManagedSettingsUI.framework; sourceTree = SDKROOT; };
+		XXCA68A9416C78B970D1D9XX /* DeviceActivity.framework */ = {isa = PBXFileReference; fileEncoding = 4; includeInIndex = undefined; lastKnownFileType = wrapper.framework; name = DeviceActivity.framework; path = System/Library/Frameworks/DeviceActivity.framework; sourceTree = SDKROOT; };
+		XXEC8F4A23169846583657XX /* ShieldConfiguration.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; fileEncoding = 4; includeInIndex = 0; path = ShieldConfiguration.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		XX5944420FAD4ECE70B4ABXX /* Exceptions for "ShieldAction" folder in "ShieldAction" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+				"expo-target.config.js",
+			);
+			target = XXA39567948BA18CFAAEA1XX /* ShieldAction */;
+		};
+		XXED6DCF72AFF9AF035382XX /* Exceptions for "ActivityMonitorExtension" folder in "ActivityMonitorExtension" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+				"expo-target.config.js",
+			);
+			target = XX062527CBC23F2C0427A9XX /* ActivityMonitorExtension */;
+		};
+		XXF54C248D5D6E8859B728XX /* Exceptions for "ShieldConfiguration" folder in "ShieldConfiguration" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+				"expo-target.config.js",
+			);
+			target = XXB230451AF9348995A9CEXX /* ShieldConfiguration */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
+/* Begin PBXFileSystemSynchronizedRootGroup section */
+		XX19644B35F62D12DB1C46XX /* ShieldConfiguration */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				XXF54C248D5D6E8859B728XX /* Exceptions for "ShieldConfiguration" folder in "ShieldConfiguration" target */,
+			);
+			explicitFileTypes = {
+			};
+			explicitFolders = (
+			);
+			path = ShieldConfiguration;
+			sourceTree = "<group>";
+		};
+		XX4B3656FA9165681D7435XX /* ShieldAction */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				XX5944420FAD4ECE70B4ABXX /* Exceptions for "ShieldAction" folder in "ShieldAction" target */,
+			);
+			explicitFileTypes = {
+			};
+			explicitFolders = (
+			);
+			path = ShieldAction;
+			sourceTree = "<group>";
+		};
+		XXA6A896DD971E46D71844XX /* ActivityMonitorExtension */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				XXED6DCF72AFF9AF035382XX /* Exceptions for "ActivityMonitorExtension" folder in "ActivityMonitorExtension" target */,
+			);
+			explicitFileTypes = {
+			};
+			explicitFolders = (
+			);
+			path = ActivityMonitorExtension;
+			sourceTree = "<group>";
+		};
+/* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
 		13B07F8C1A680F5B00A75B9A /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				B5EF42D008534CB0BA4F8D98 /* DeviceActivity.framework in Frameworks */,
-				C3286E94F5654BD892739E77 /* FamilyControls.framework in Frameworks */,
-				03B888049E094238A8B607A5 /* ManagedSettings.framework in Frameworks */,
-				1172583D905E41978D1440F0 /* SwiftUI.framework in Frameworks */,
-				A0355E1C938EC158C29D9BF0 /* Pods_DopamineDetoxSelfControl.framework in Frameworks */,
+				2EDECF8ABD13D41708E42413 /* Pods_DopamineDetoxSelfControl.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		XX074B8811C1CF8E8A3D74XX /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				XXD33E402502F114432AD3XX /* DeviceActivity.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		XXBA6CDF0021ABEEEDFCFBXX /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				XX44FC18D28196FBCB6075XX /* ManagedSettingsUI.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		0A3931BD87425330A2493C2B /* ExpoModulesProviders */ = {
+			isa = PBXGroup;
+			children = (
+				61B1002962A84C3229E092C3 /* DopamineDetoxSelfControl */,
+			);
+			name = ExpoModulesProviders;
+			sourceTree = "<group>";
+		};
 		13B07FAE1A68108700A75B9A /* DopamineDetoxSelfControl */ = {
 			isa = PBXGroup;
 			children = (
@@ -91,8 +195,8 @@
 				13B07FB51A68108700A75B9A /* Images.xcassets */,
 				13B07FB61A68108700A75B9A /* Info.plist */,
 				AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */,
-				29081AF107A54D24BEBD46EB /* GoogleService-Info.plist */,
-				1CA73DE4473182263E515347 /* PrivacyInfo.xcprivacy */,
+				14485B0750224FD091404516 /* GoogleService-Info.plist */,
+				2EB6ADD1717152C74B7DCC33 /* PrivacyInfo.xcprivacy */,
 			);
 			name = DopamineDetoxSelfControl;
 			sourceTree = "<group>";
@@ -101,13 +205,19 @@
 			isa = PBXGroup;
 			children = (
 				ED297162215061F000B7C4FE /* JavaScriptCore.framework */,
-				6F7688AB14DD4DF2979A22FA /* DeviceActivity.framework */,
-				AF51028A1EF7475E8410A6BB /* FamilyControls.framework */,
-				E0AD2F9C06CF42F1AAA8C61B /* ManagedSettings.framework */,
-				19E40186129741FAB45C304A /* SwiftUI.framework */,
-				2C670D69DFFAE5BF2D3BF691 /* Pods_DopamineDetoxSelfControl.framework */,
+				XXCA68A9416C78B970D1D9XX /* DeviceActivity.framework */,
+				XXB6D82409997898620841XX /* ManagedSettingsUI.framework */,
+				D6F374C50BF848F5695613AA /* Pods_DopamineDetoxSelfControl.framework */,
 			);
 			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		61B1002962A84C3229E092C3 /* DopamineDetoxSelfControl */ = {
+			isa = PBXGroup;
+			children = (
+				7DA5CA9A1781CCB3DD6D4390 /* ExpoModulesProvider.swift */,
+			);
+			name = DopamineDetoxSelfControl;
 			sourceTree = "<group>";
 		};
 		832341AE1AAA6A7D00B99B32 /* Libraries */ = {
@@ -120,13 +230,13 @@
 		83CBB9F61A601CBA00E9B192 = {
 			isa = PBXGroup;
 			children = (
+				XX3E41C1850246162C0061XX /* expo:targets */,
 				13B07FAE1A68108700A75B9A /* DopamineDetoxSelfControl */,
 				832341AE1AAA6A7D00B99B32 /* Libraries */,
 				83CBBA001A601CBA00E9B192 /* Products */,
 				2D16E6871FA4F8E400B85C8A /* Frameworks */,
-				BCCA0B1BDB844FE0AA7DBEB6 /* ScreenTimeReportExtension */,
-				A8C31470F708FEF52464E23D /* Pods */,
-				F76390BB430D3033FAB32B16 /* ExpoModulesProviders */,
+				9D41DDD2F34518870A266F61 /* Pods */,
+				0A3931BD87425330A2493C2B /* ExpoModulesProviders */,
 			);
 			indentWidth = 2;
 			sourceTree = "<group>";
@@ -137,27 +247,21 @@
 			isa = PBXGroup;
 			children = (
 				13B07F961A680F5B00A75B9A /* DopamineDetoxSelfControl.app */,
-				EEAE5C3956EB45A6A73FB493 /* ScreenTimeReportExtension.appex */,
+				XX7DDE620121E0E26B18E0XX /* ActivityMonitorExtension.appex */,
+				XX05E83E103BF49F57A457XX /* ShieldAction.appex */,
+				XXEC8F4A23169846583657XX /* ShieldConfiguration.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
 		};
-		A8C31470F708FEF52464E23D /* Pods */ = {
+		9D41DDD2F34518870A266F61 /* Pods */ = {
 			isa = PBXGroup;
 			children = (
-				F36E795B0F1E6807B2516DF1 /* Pods-DopamineDetoxSelfControl.debug.xcconfig */,
-				7A9EF519F7892BDD44C379B9 /* Pods-DopamineDetoxSelfControl.release.xcconfig */,
+				A2483683EC726A3B775C4F97 /* Pods-DopamineDetoxSelfControl.debug.xcconfig */,
+				F7B9385806D958E4050BC3A9 /* Pods-DopamineDetoxSelfControl.release.xcconfig */,
 			);
 			name = Pods;
 			path = Pods;
-			sourceTree = "<group>";
-		};
-		B2E027173CC2F8D735D32198 /* DopamineDetoxSelfControl */ = {
-			isa = PBXGroup;
-			children = (
-				0E0785D1671AB4B759CD8103 /* ExpoModulesProvider.swift */,
-			);
-			name = DopamineDetoxSelfControl;
 			sourceTree = "<group>";
 		};
 		BB2F792B24A3F905000567C9 /* Supporting */ = {
@@ -169,28 +273,15 @@
 			path = DopamineDetoxSelfControl/Supporting;
 			sourceTree = "<group>";
 		};
-		BCCA0B1BDB844FE0AA7DBEB6 /* ScreenTimeReportExtension */ = {
+		XX3E41C1850246162C0061XX /* expo:targets */ = {
 			isa = PBXGroup;
 			children = (
-				E31B10AB9CFA4D5FB98C5088 /* ScreenTimeReportExtension.swift */,
-				26B001A831A34F1D95527A3F /* TotalActivityReport.swift */,
-				7F32C8BB90124FC5BD12F5FA /* TotalActivityView.swift */,
-				4AA001B91DE64C64969876CF /* Info.plist */,
-				626EE59E07904C1ABC7EA6A4 /* ScreenTimeReportExtension.entitlements */,
-				8C67A12E14E54ABA9890B8AA /* ScreenTimeReportExtension.swift */,
-				25695DEDE1444E6BB01B13B6 /* TotalActivityReport.swift */,
-				EA65142935864506B357F56D /* TotalActivityView.swift */,
+				XXA6A896DD971E46D71844XX /* ActivityMonitorExtension */,
+				XX4B3656FA9165681D7435XX /* ShieldAction */,
+				XX19644B35F62D12DB1C46XX /* ShieldConfiguration */,
 			);
-			name = ScreenTimeReportExtension;
-			path = ScreenTimeReportExtension;
-			sourceTree = "<group>";
-		};
-		F76390BB430D3033FAB32B16 /* ExpoModulesProviders */ = {
-			isa = PBXGroup;
-			children = (
-				B2E027173CC2F8D735D32198 /* DopamineDetoxSelfControl */,
-			);
-			name = ExpoModulesProviders;
+			name = "expo:targets";
+			path = ../targets;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -201,38 +292,85 @@
 			buildConfigurationList = 13B07F931A680F5B00A75B9A /* Build configuration list for PBXNativeTarget "DopamineDetoxSelfControl" */;
 			buildPhases = (
 				08A4A3CD28434E44B6B9DE2E /* [CP] Check Pods Manifest.lock */,
-				EEF0DC6D86E2632F9FB0BAE7 /* [Expo] Configure project */,
+				357CA08BD3EFD1E2A82E36EA /* [Expo] Configure project */,
 				13B07F871A680F5B00A75B9A /* Sources */,
 				13B07F8C1A680F5B00A75B9A /* Frameworks */,
 				13B07F8E1A680F5B00A75B9A /* Resources */,
 				00DD1BFF1BD5951E006B06BC /* Bundle React Native code and images */,
 				800E24972A6A228C8D4807E9 /* [CP] Copy Pods Resources */,
-				A51077AA498E4434A68A2795 /* Copy Files */,
-				4FE293DF9AFDA62ADE5834F5 /* [CP] Embed Pods Frameworks */,
-				801F3DD7541F311F0B02D55C /* [CP-User] [RNFB] Core Configuration */,
+				XX72A8CFBF0FBA13A79902XX /* Embed Foundation Extensions */,
+				857BF6AEE6ACBD8A5E947223 /* [CP] Embed Pods Frameworks */,
+				DD425D984044135324CEEE9B /* [CP-User] [RNFB] Core Configuration */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				XX093835EEA1932A27BC96XX /* PBXTargetDependency */,
+				XX928E6E6AD19CCE3BD2B6XX /* PBXTargetDependency */,
+				XXC5ADEAB27860F02A0F29XX /* PBXTargetDependency */,
 			);
 			name = DopamineDetoxSelfControl;
 			productName = DopamineDetoxSelfControl;
 			productReference = 13B07F961A680F5B00A75B9A /* DopamineDetoxSelfControl.app */;
 			productType = "com.apple.product-type.application";
 		};
-		DB3FC6FA681C4312A64CEE65 /* ScreenTimeReportExtension */ = {
+		XX062527CBC23F2C0427A9XX /* ActivityMonitorExtension */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = AA1B320101EC4FF29CB9F4CA /* Build configuration list for PBXNativeTarget "ScreenTimeReportExtension" */;
+			buildConfigurationList = XX121C1E9425242DC21E45XX /* Build configuration list for PBXNativeTarget "ActivityMonitorExtension" */;
 			buildPhases = (
-				61069F0D6FF1AA8E672A8C31 /* Sources */,
+				XX074B8811C1CF8E8A3D74XX /* Frameworks */,
+				XXE45443DC38DCFE1DB622XX /* Sources */,
+				XXFA5A8CCDD805DF7AEF9CXX /* Resources */,
 			);
 			buildRules = (
 			);
 			dependencies = (
 			);
-			name = ScreenTimeReportExtension;
-			productName = ScreenTimeReportExtension;
-			productReference = EEAE5C3956EB45A6A73FB493 /* ScreenTimeReportExtension.appex */;
+			fileSystemSynchronizedGroups = (
+				XXA6A896DD971E46D71844XX /* ActivityMonitorExtension */,
+			);
+			name = ActivityMonitorExtension;
+			productName = ActivityMonitorExtension;
+			productReference = XX7DDE620121E0E26B18E0XX /* ActivityMonitorExtension.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
+		XXA39567948BA18CFAAEA1XX /* ShieldAction */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = XXA505D2B5A557266A3E84XX /* Build configuration list for PBXNativeTarget "ShieldAction" */;
+			buildPhases = (
+				XXBA6CDF0021ABEEEDFCFBXX /* Frameworks */,
+				XXDC105B0E28F884B8E02DXX /* Sources */,
+				XXC55EF014B50CBDECCD15XX /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				XX4B3656FA9165681D7435XX /* ShieldAction */,
+			);
+			name = ShieldAction;
+			productName = ShieldAction;
+			productReference = XX05E83E103BF49F57A457XX /* ShieldAction.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
+		XXB230451AF9348995A9CEXX /* ShieldConfiguration */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = XX307ED51AD6B35C479AD4XX /* Build configuration list for PBXNativeTarget "ShieldConfiguration" */;
+			buildPhases = (
+				XXE5EC32CD2D09C6C886C7XX /* Sources */,
+				XX00779A11A1B70B580100XX /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				XX19644B35F62D12DB1C46XX /* ShieldConfiguration */,
+			);
+			name = ShieldConfiguration;
+			productName = ShieldConfiguration;
+			productReference = XXEC8F4A23169846583657XX /* ShieldConfiguration.appex */;
 			productType = "com.apple.product-type.app-extension";
 		};
 /* End PBXNativeTarget section */
@@ -251,6 +389,21 @@
 							};
 						};
 					};
+					XX062527CBC23F2C0427A9XX = {
+						CreatedOnToolsVersion = 14.3;
+						DevelopmentTeam = undefined;
+						ProvisioningStyle = Automatic;
+					};
+					XXA39567948BA18CFAAEA1XX = {
+						CreatedOnToolsVersion = 14.3;
+						DevelopmentTeam = undefined;
+						ProvisioningStyle = Automatic;
+					};
+					XXB230451AF9348995A9CEXX = {
+						CreatedOnToolsVersion = 14.3;
+						DevelopmentTeam = undefined;
+						ProvisioningStyle = Automatic;
+					};
 				};
 			};
 			buildConfigurationList = 83CBB9FA1A601CBA00E9B192 /* Build configuration list for PBXProject "DopamineDetoxSelfControl" */;
@@ -267,7 +420,9 @@
 			projectRoot = "";
 			targets = (
 				13B07F861A680F5B00A75B9A /* DopamineDetoxSelfControl */,
-				DB3FC6FA681C4312A64CEE65 /* ScreenTimeReportExtension */,
+				XX062527CBC23F2C0427A9XX /* ActivityMonitorExtension */,
+				XXA39567948BA18CFAAEA1XX /* ShieldAction */,
+				XXB230451AF9348995A9CEXX /* ShieldConfiguration */,
 			);
 		};
 /* End PBXProject section */
@@ -280,8 +435,29 @@
 				BB2F792D24A3F905000567C9 /* Expo.plist in Resources */,
 				13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */,
 				3E461D99554A48A4959DE609 /* SplashScreen.storyboard in Resources */,
-				6AFE0B74C6BD42A1B190E3D6 /* GoogleService-Info.plist in Resources */,
-				E3F3EF45AA7768FED708263C /* PrivacyInfo.xcprivacy in Resources */,
+				01EB108AE08B43A9BE80799E /* GoogleService-Info.plist in Resources */,
+				F8A02323537A05955D2B9005 /* PrivacyInfo.xcprivacy in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		XX00779A11A1B70B580100XX /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		XXC55EF014B50CBDECCD15XX /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		XXFA5A8CCDD805DF7AEF9CXX /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -294,11 +470,15 @@
 			buildActionMask = 2147483647;
 			files = (
 			);
+			inputFileListPaths = (
+			);
 			inputPaths = (
 				"$(SRCROOT)/.xcode.env",
 				"$(SRCROOT)/.xcode.env.local",
 			);
 			name = "Bundle React Native code and images";
+			outputFileListPaths = (
+			);
 			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -327,27 +507,29 @@
 			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
 			showEnvVarsInLog = 0;
 		};
-		4FE293DF9AFDA62ADE5834F5 /* [CP] Embed Pods Frameworks */ = {
+		357CA08BD3EFD1E2A82E36EA /* [Expo] Configure project */ = {
 			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
 			buildActionMask = 2147483647;
 			files = (
 			);
-			inputPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-DopamineDetoxSelfControl/Pods-DopamineDetoxSelfControl-frameworks.sh",
-				"${PODS_XCFRAMEWORKS_BUILD_DIR}/React-Core-prebuilt/React.framework/React",
-				"${PODS_XCFRAMEWORKS_BUILD_DIR}/ReactNativeDependencies/ReactNativeDependencies.framework/ReactNativeDependencies",
-				"${PODS_XCFRAMEWORKS_BUILD_DIR}/hermes-engine/Pre-built/hermes.framework/hermes",
+			inputFileListPaths = (
 			);
-			name = "[CP] Embed Pods Frameworks";
+			inputPaths = (
+				"$(SRCROOT)/.xcode.env",
+				"$(SRCROOT)/.xcode.env.local",
+				"$(SRCROOT)/DopamineDetoxSelfControl/DopamineDetoxSelfControl.entitlements",
+				"$(SRCROOT)/Pods/Target Support Files/Pods-DopamineDetoxSelfControl/expo-configure-project.sh",
+			);
+			name = "[Expo] Configure project";
+			outputFileListPaths = (
+			);
 			outputPaths = (
-				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/React.framework",
-				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/ReactNativeDependencies.framework",
-				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/hermes.framework",
+				"$(SRCROOT)/Pods/Target Support Files/Pods-DopamineDetoxSelfControl/ExpoModulesProvider.swift",
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-DopamineDetoxSelfControl/Pods-DopamineDetoxSelfControl-frameworks.sh\"\n";
-			showEnvVarsInLog = 0;
+			shellScript = "# This script configures Expo modules and generates the modules provider file.\nbash -l -c \"./Pods/Target\\ Support\\ Files/Pods-DopamineDetoxSelfControl/expo-configure-project.sh\"\n";
 		};
 		800E24972A6A228C8D4807E9 /* [CP] Copy Pods Resources */ = {
 			isa = PBXShellScriptBuildPhase;
@@ -403,42 +585,40 @@
 			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-DopamineDetoxSelfControl/Pods-DopamineDetoxSelfControl-resources.sh\"\n";
 			showEnvVarsInLog = 0;
 		};
-		801F3DD7541F311F0B02D55C /* [CP-User] [RNFB] Core Configuration */ = {
+		857BF6AEE6ACBD8A5E947223 /* [CP] Embed Pods Frameworks */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
 			);
 			inputPaths = (
-				
+				"${PODS_ROOT}/Target Support Files/Pods-DopamineDetoxSelfControl/Pods-DopamineDetoxSelfControl-frameworks.sh",
+				"${PODS_XCFRAMEWORKS_BUILD_DIR}/React-Core-prebuilt/React.framework/React",
+				"${PODS_XCFRAMEWORKS_BUILD_DIR}/ReactNativeDependencies/ReactNativeDependencies.framework/ReactNativeDependencies",
+				"${PODS_XCFRAMEWORKS_BUILD_DIR}/hermes-engine/Pre-built/hermes.framework/hermes",
+			);
+			name = "[CP] Embed Pods Frameworks";
+			outputPaths = (
+				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/React.framework",
+				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/ReactNativeDependencies.framework",
+				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/hermes.framework",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-DopamineDetoxSelfControl/Pods-DopamineDetoxSelfControl-frameworks.sh\"\n";
+			showEnvVarsInLog = 0;
+		};
+		DD425D984044135324CEEE9B /* [CP-User] [RNFB] Core Configuration */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+				"$(BUILT_PRODUCTS_DIR)/$(INFOPLIST_PATH)",
 			);
 			name = "[CP-User] [RNFB] Core Configuration";
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
 			shellScript = "#!/usr/bin/env bash\n#\n# Copyright (c) 2016-present Invertase Limited & Contributors\n#\n# Licensed under the Apache License, Version 2.0 (the \"License\");\n# you may not use this library except in compliance with the License.\n# You may obtain a copy of the License at\n#\n#   http://www.apache.org/licenses/LICENSE-2.0\n#\n# Unless required by applicable law or agreed to in writing, software\n# distributed under the License is distributed on an \"AS IS\" BASIS,\n# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.\n# See the License for the specific language governing permissions and\n# limitations under the License.\n#\n\n##########################################################################\n##########################################################################\n#\n#  NOTE THAT IF YOU CHANGE THIS FILE YOU MUST RUN pod install AFTERWARDS\n#\n#  This file is installed as an Xcode build script in the project file\n#  by cocoapods, and you will not see your changes until you pod install\n#\n##########################################################################\n##########################################################################\n\nset -e\n\n_MAX_LOOKUPS=2;\n_SEARCH_RESULT=''\n_RN_ROOT_EXISTS=''\n_CURRENT_LOOKUPS=1\n_JSON_ROOT=\"'react-native'\"\n_JSON_FILE_NAME='firebase.json'\n_JSON_OUTPUT_BASE64='e30=' # { }\n_CURRENT_SEARCH_DIR=${PROJECT_DIR}\n_PLIST_BUDDY=/usr/libexec/PlistBuddy\n_TARGET_PLIST=\"${BUILT_PRODUCTS_DIR}/${INFOPLIST_PATH}\"\n_DSYM_PLIST=\"${DWARF_DSYM_FOLDER_PATH}/${DWARF_DSYM_FILE_NAME}/Contents/Info.plist\"\n\n# plist arrays\n_PLIST_ENTRY_KEYS=()\n_PLIST_ENTRY_TYPES=()\n_PLIST_ENTRY_VALUES=()\n\nfunction setPlistValue {\n  echo \"note:      setting plist entry '$1' of type '$2' in file '$4'\"\n  ${_PLIST_BUDDY} -c \"Add :$1 $2 '$3'\" $4 || echo \"note:      '$1' already exists\"\n}\n\nfunction getFirebaseJsonKeyValue () {\n  if [[ ${_RN_ROOT_EXISTS} ]]; then\n    ruby -Ku -e \"require 'rubygems';require 'json'; output=JSON.parse('$1'); puts output[$_JSON_ROOT]['$2']\"\n  else\n    echo \"\"\n  fi;\n}\n\nfunction jsonBoolToYesNo () {\n  if [[ $1 == \"false\" ]]; then\n    echo \"NO\"\n  elif [[ $1 == \"true\" ]]; then\n    echo \"YES\"\n  else echo \"NO\"\n  fi\n}\n\necho \"note: -> RNFB build script started\"\necho \"note: 1) Locating ${_JSON_FILE_NAME} file:\"\n\nif [[ -z ${_CURRENT_SEARCH_DIR} ]]; then\n  _CURRENT_SEARCH_DIR=$(pwd)\nfi;\n\nwhile true; do\n  _CURRENT_SEARCH_DIR=$(dirname \"$_CURRENT_SEARCH_DIR\")\n  if [[ \"$_CURRENT_SEARCH_DIR\" == \"/\" ]] || [[ ${_CURRENT_LOOKUPS} -gt ${_MAX_LOOKUPS} ]]; then break; fi;\n  echo \"note:      ($_CURRENT_LOOKUPS of $_MAX_LOOKUPS) Searching in '$_CURRENT_SEARCH_DIR' for a ${_JSON_FILE_NAME} file.\"\n  _SEARCH_RESULT=$(find \"$_CURRENT_SEARCH_DIR\" -maxdepth 2 -name ${_JSON_FILE_NAME} -print | /usr/bin/head -n 1)\n  if [[ ${_SEARCH_RESULT} ]]; then\n    echo \"note:      ${_JSON_FILE_NAME} found at $_SEARCH_RESULT\"\n    break;\n  fi;\n  _CURRENT_LOOKUPS=$((_CURRENT_LOOKUPS+1))\ndone\n\nif [[ ${_SEARCH_RESULT} ]]; then\n  _JSON_OUTPUT_RAW=$(cat \"${_SEARCH_RESULT}\")\n  if ! _RN_ROOT_EXISTS=$(ruby -Ku -e \"require 'json'; output=JSON.parse('$_JSON_OUTPUT_RAW'); puts output[$_JSON_ROOT]\"); then\n    echo \"error: Failed to parse firebase.json, check for syntax errors.\"\n    exit 1\n  fi\n\n  if [[ ${_RN_ROOT_EXISTS} ]]; then\n    if ! python3 --version >/dev/null 2>&1; then echo \"error: python3 not found, firebase.json file processing error.\" && exit 1; fi\n    _JSON_OUTPUT_BASE64=$(python3 -c 'import json,sys,base64;print(base64.b64encode(bytes(json.dumps(json.loads(open('\"'${_SEARCH_RESULT}'\"', '\"'rb'\"').read())['${_JSON_ROOT}']), '\"'utf-8'\"')).decode())' || echo \"e30=\")\n  fi\n\n  _PLIST_ENTRY_KEYS+=(\"firebase_json_raw\")\n  _PLIST_ENTRY_TYPES+=(\"string\")\n  _PLIST_ENTRY_VALUES+=(\"$_JSON_OUTPUT_BASE64\")\n\n  # config.app_data_collection_default_enabled\n  _APP_DATA_COLLECTION_ENABLED=$(getFirebaseJsonKeyValue \"$_JSON_OUTPUT_RAW\" \"app_data_collection_default_enabled\")\n  if [[ $_APP_DATA_COLLECTION_ENABLED ]]; then\n    _PLIST_ENTRY_KEYS+=(\"FirebaseDataCollectionDefaultEnabled\")\n    _PLIST_ENTRY_TYPES+=(\"bool\")\n    _PLIST_ENTRY_VALUES+=(\"$(jsonBoolToYesNo \"$_APP_DATA_COLLECTION_ENABLED\")\")\n  fi\n\n  # config.analytics_auto_collection_enabled\n  _ANALYTICS_AUTO_COLLECTION=$(getFirebaseJsonKeyValue \"$_JSON_OUTPUT_RAW\" \"analytics_auto_collection_enabled\")\n  if [[ $_ANALYTICS_AUTO_COLLECTION ]]; then\n    _PLIST_ENTRY_KEYS+=(\"FIREBASE_ANALYTICS_COLLECTION_ENABLED\")\n    _PLIST_ENTRY_TYPES+=(\"bool\")\n    _PLIST_ENTRY_VALUES+=(\"$(jsonBoolToYesNo \"$_ANALYTICS_AUTO_COLLECTION\")\")\n  fi\n\n  # config.analytics_collection_deactivated\n  _ANALYTICS_DEACTIVATED=$(getFirebaseJsonKeyValue \"$_JSON_OUTPUT_RAW\" \"analytics_collection_deactivated\")\n  if [[ $_ANALYTICS_DEACTIVATED ]]; then\n    _PLIST_ENTRY_KEYS+=(\"FIREBASE_ANALYTICS_COLLECTION_DEACTIVATED\")\n    _PLIST_ENTRY_TYPES+=(\"bool\")\n    _PLIST_ENTRY_VALUES+=(\"$(jsonBoolToYesNo \"$_ANALYTICS_DEACTIVATED\")\")\n  fi\n\n  # config.analytics_idfv_collection_enabled\n  _ANALYTICS_IDFV_COLLECTION=$(getFirebaseJsonKeyValue \"$_JSON_OUTPUT_RAW\" \"analytics_idfv_collection_enabled\")\n  if [[ $_ANALYTICS_IDFV_COLLECTION ]]; then\n    _PLIST_ENTRY_KEYS+=(\"GOOGLE_ANALYTICS_IDFV_COLLECTION_ENABLED\")\n    _PLIST_ENTRY_TYPES+=(\"bool\")\n    _PLIST_ENTRY_VALUES+=(\"$(jsonBoolToYesNo \"$_ANALYTICS_IDFV_COLLECTION\")\")\n  fi\n\n  # config.analytics_default_allow_analytics_storage\n  _ANALYTICS_STORAGE=$(getFirebaseJsonKeyValue \"$_JSON_OUTPUT_RAW\" \"analytics_default_allow_analytics_storage\")\n  if [[ $_ANALYTICS_STORAGE ]]; then\n    _PLIST_ENTRY_KEYS+=(\"GOOGLE_ANALYTICS_DEFAULT_ALLOW_ANALYTICS_STORAGE\")\n    _PLIST_ENTRY_TYPES+=(\"bool\")\n    _PLIST_ENTRY_VALUES+=(\"$(jsonBoolToYesNo \"$_ANALYTICS_STORAGE\")\")\n  fi\n\n  # config.analytics_default_allow_ad_storage\n  _ANALYTICS_AD_STORAGE=$(getFirebaseJsonKeyValue \"$_JSON_OUTPUT_RAW\" \"analytics_default_allow_ad_storage\")\n  if [[ $_ANALYTICS_AD_STORAGE ]]; then\n    _PLIST_ENTRY_KEYS+=(\"GOOGLE_ANALYTICS_DEFAULT_ALLOW_AD_STORAGE\")\n    _PLIST_ENTRY_TYPES+=(\"bool\")\n    _PLIST_ENTRY_VALUES+=(\"$(jsonBoolToYesNo \"$_ANALYTICS_AD_STORAGE\")\")\n  fi\n\n  # config.analytics_default_allow_ad_user_data\n  _ANALYTICS_AD_USER_DATA=$(getFirebaseJsonKeyValue \"$_JSON_OUTPUT_RAW\" \"analytics_default_allow_ad_user_data\")\n  if [[ $_ANALYTICS_AD_USER_DATA ]]; then\n    _PLIST_ENTRY_KEYS+=(\"GOOGLE_ANALYTICS_DEFAULT_ALLOW_AD_USER_DATA\")\n    _PLIST_ENTRY_TYPES+=(\"bool\")\n    _PLIST_ENTRY_VALUES+=(\"$(jsonBoolToYesNo \"$_ANALYTICS_AD_USER_DATA\")\")\n  fi\n\n  # config.analytics_default_allow_ad_personalization_signals\n  _ANALYTICS_PERSONALIZATION=$(getFirebaseJsonKeyValue \"$_JSON_OUTPUT_RAW\" \"analytics_default_allow_ad_personalization_signals\")\n  if [[ $_ANALYTICS_PERSONALIZATION ]]; then\n    _PLIST_ENTRY_KEYS+=(\"GOOGLE_ANALYTICS_DEFAULT_ALLOW_AD_PERSONALIZATION_SIGNALS\")\n    _PLIST_ENTRY_TYPES+=(\"bool\")\n    _PLIST_ENTRY_VALUES+=(\"$(jsonBoolToYesNo \"$_ANALYTICS_PERSONALIZATION\")\")\n  fi\n\n  # config.analytics_registration_with_ad_network_enabled\n  _ANALYTICS_REGISTRATION_WITH_AD_NETWORK=$(getFirebaseJsonKeyValue \"$_JSON_OUTPUT_RAW\" \"google_analytics_registration_with_ad_network_enabled\")\n  if [[ $_ANALYTICS_REGISTRATION_WITH_AD_NETWORK ]]; then\n    _PLIST_ENTRY_KEYS+=(\"GOOGLE_ANALYTICS_REGISTRATION_WITH_AD_NETWORK_ENABLED\")\n    _PLIST_ENTRY_TYPES+=(\"bool\")\n    _PLIST_ENTRY_VALUES+=(\"$(jsonBoolToYesNo \"$_ANALYTICS_REGISTRATION_WITH_AD_NETWORK\")\")\n  fi\n\n  # config.google_analytics_automatic_screen_reporting_enabled\n  _ANALYTICS_AUTO_SCREEN_REPORTING=$(getFirebaseJsonKeyValue \"$_JSON_OUTPUT_RAW\" \"google_analytics_automatic_screen_reporting_enabled\")\n  if [[ $_ANALYTICS_AUTO_SCREEN_REPORTING ]]; then\n    _PLIST_ENTRY_KEYS+=(\"FirebaseAutomaticScreenReportingEnabled\")\n    _PLIST_ENTRY_TYPES+=(\"bool\")\n    _PLIST_ENTRY_VALUES+=(\"$(jsonBoolToYesNo \"$_ANALYTICS_AUTO_SCREEN_REPORTING\")\")\n  fi\n\n  # config.perf_auto_collection_enabled\n  _PERF_AUTO_COLLECTION=$(getFirebaseJsonKeyValue \"$_JSON_OUTPUT_RAW\" \"perf_auto_collection_enabled\")\n  if [[ $_PERF_AUTO_COLLECTION ]]; then\n    _PLIST_ENTRY_KEYS+=(\"firebase_performance_collection_enabled\")\n    _PLIST_ENTRY_TYPES+=(\"bool\")\n    _PLIST_ENTRY_VALUES+=(\"$(jsonBoolToYesNo \"$_PERF_AUTO_COLLECTION\")\")\n  fi\n\n  # config.perf_collection_deactivated\n  _PERF_DEACTIVATED=$(getFirebaseJsonKeyValue \"$_JSON_OUTPUT_RAW\" \"perf_collection_deactivated\")\n  if [[ $_PERF_DEACTIVATED ]]; then\n    _PLIST_ENTRY_KEYS+=(\"firebase_performance_collection_deactivated\")\n    _PLIST_ENTRY_TYPES+=(\"bool\")\n    _PLIST_ENTRY_VALUES+=(\"$(jsonBoolToYesNo \"$_PERF_DEACTIVATED\")\")\n  fi\n\n  # config.messaging_auto_init_enabled\n  _MESSAGING_AUTO_INIT=$(getFirebaseJsonKeyValue \"$_JSON_OUTPUT_RAW\" \"messaging_auto_init_enabled\")\n  if [[ $_MESSAGING_AUTO_INIT ]]; then\n    _PLIST_ENTRY_KEYS+=(\"FirebaseMessagingAutoInitEnabled\")\n    _PLIST_ENTRY_TYPES+=(\"bool\")\n    _PLIST_ENTRY_VALUES+=(\"$(jsonBoolToYesNo \"$_MESSAGING_AUTO_INIT\")\")\n  fi\n\n  # config.in_app_messaging_auto_colllection_enabled\n  _FIAM_AUTO_INIT=$(getFirebaseJsonKeyValue \"$_JSON_OUTPUT_RAW\" \"in_app_messaging_auto_collection_enabled\")\n  if [[ $_FIAM_AUTO_INIT ]]; then\n    _PLIST_ENTRY_KEYS+=(\"FirebaseInAppMessagingAutomaticDataCollectionEnabled\")\n    _PLIST_ENTRY_TYPES+=(\"bool\")\n    _PLIST_ENTRY_VALUES+=(\"$(jsonBoolToYesNo \"$_FIAM_AUTO_INIT\")\")\n  fi\n\n  # config.app_check_token_auto_refresh\n  _APP_CHECK_TOKEN_AUTO_REFRESH=$(getFirebaseJsonKeyValue \"$_JSON_OUTPUT_RAW\" \"app_check_token_auto_refresh\")\n  if [[ $_APP_CHECK_TOKEN_AUTO_REFRESH ]]; then\n    _PLIST_ENTRY_KEYS+=(\"FirebaseAppCheckTokenAutoRefreshEnabled\")\n    _PLIST_ENTRY_TYPES+=(\"bool\")\n    _PLIST_ENTRY_VALUES+=(\"$(jsonBoolToYesNo \"$_APP_CHECK_TOKEN_AUTO_REFRESH\")\")\n  fi\n\n  # config.crashlytics_disable_auto_disabler - undocumented for now - mainly for debugging, document if becomes useful\n  _CRASHLYTICS_AUTO_DISABLE_ENABLED=$(getFirebaseJsonKeyValue \"$_JSON_OUTPUT_RAW\" \"crashlytics_disable_auto_disabler\")\n  if [[ $_CRASHLYTICS_AUTO_DISABLE_ENABLED == \"true\" ]]; then\n    echo \"Disabled Crashlytics auto disabler.\" # do nothing\n  else\n    _PLIST_ENTRY_KEYS+=(\"FirebaseCrashlyticsCollectionEnabled\")\n    _PLIST_ENTRY_TYPES+=(\"bool\")\n    _PLIST_ENTRY_VALUES+=(\"NO\")\n  fi\nelse\n  _PLIST_ENTRY_KEYS+=(\"firebase_json_raw\")\n  _PLIST_ENTRY_TYPES+=(\"string\")\n  _PLIST_ENTRY_VALUES+=(\"$_JSON_OUTPUT_BASE64\")\n  echo \"warning:   A firebase.json file was not found, whilst this file is optional it is recommended to include it to configure firebase services in React Native Firebase.\"\nfi;\n\necho \"note: 2) Injecting Info.plist entries: \"\n\n# Log out the keys we're adding\nfor i in \"${!_PLIST_ENTRY_KEYS[@]}\"; do\n  echo \"    ->  $i) ${_PLIST_ENTRY_KEYS[$i]}\" \"${_PLIST_ENTRY_TYPES[$i]}\" \"${_PLIST_ENTRY_VALUES[$i]}\"\ndone\n\nfor plist in \"${_TARGET_PLIST}\" \"${_DSYM_PLIST}\" ; do\n  if [[ -f \"${plist}\" ]]; then\n\n    # paths with spaces break the call to setPlistValue. temporarily modify\n    # the shell internal field separator variable (IFS), which normally\n    # includes spaces, to consist only of line breaks\n    oldifs=$IFS\n    IFS=\"\n\"\n\n    for i in \"${!_PLIST_ENTRY_KEYS[@]}\"; do\n      setPlistValue \"${_PLIST_ENTRY_KEYS[$i]}\" \"${_PLIST_ENTRY_TYPES[$i]}\" \"${_PLIST_ENTRY_VALUES[$i]}\" \"${plist}\"\n    done\n\n    # restore the original internal field separator value\n    IFS=$oldifs\n  else\n    echo \"warning:   A Info.plist build output file was not found (${plist})\"\n  fi\ndone\n\necho \"note: <- RNFB build script finished\"\n";
-		};
-		EEF0DC6D86E2632F9FB0BAE7 /* [Expo] Configure project */ = {
-			isa = PBXShellScriptBuildPhase;
-			alwaysOutOfDate = 1;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputFileListPaths = (
-			);
-			inputPaths = (
-				"$(SRCROOT)/.xcode.env",
-				"$(SRCROOT)/.xcode.env.local",
-				"$(SRCROOT)/DopamineDetoxSelfControl/DopamineDetoxSelfControl.entitlements",
-				"$(SRCROOT)/Pods/Target Support Files/Pods-DopamineDetoxSelfControl/expo-configure-project.sh",
-			);
-			name = "[Expo] Configure project";
-			outputFileListPaths = (
-			);
-			outputPaths = (
-				"$(SRCROOT)/Pods/Target Support Files/Pods-DopamineDetoxSelfControl/ExpoModulesProvider.swift",
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "# This script configures Expo modules and generates the modules provider file.\nbash -l -c \"./Pods/Target\\ Support\\ Files/Pods-DopamineDetoxSelfControl/expo-configure-project.sh\"\n";
 		};
 /* End PBXShellScriptBuildPhase section */
 
@@ -448,11 +628,25 @@
 			buildActionMask = 2147483647;
 			files = (
 				F11748422D0307B40044C1D9 /* AppDelegate.swift in Sources */,
-				B87F6C8A47CDC6EE1F174727 /* ExpoModulesProvider.swift in Sources */,
+				C1DF0BA7102ACF33CC8B1E2E /* ExpoModulesProvider.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		61069F0D6FF1AA8E672A8C31 /* Sources */ = {
+		XXDC105B0E28F884B8E02DXX /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		XXE45443DC38DCFE1DB622XX /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		XXE5EC32CD2D09C6C886C7XX /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -461,11 +655,30 @@
 		};
 /* End PBXSourcesBuildPhase section */
 
+/* Begin PBXTargetDependency section */
+		XX093835EEA1932A27BC96XX /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = XX062527CBC23F2C0427A9XX /* ActivityMonitorExtension */;
+			targetProxy = XXFD660248A30EB6AB2E1BXX /* PBXContainerItemProxy */;
+		};
+		XX928E6E6AD19CCE3BD2B6XX /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = XXA39567948BA18CFAAEA1XX /* ShieldAction */;
+			targetProxy = XX2AF4E4DEB5BECD158CADXX /* PBXContainerItemProxy */;
+		};
+		XXC5ADEAB27860F02A0F29XX /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = XXB230451AF9348995A9CEXX /* ShieldConfiguration */;
+			targetProxy = XX3043BDA0811681D4E69FXX /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
 /* Begin XCBuildConfiguration section */
 		13B07F941A680F5B00A75B9A /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = F36E795B0F1E6807B2516DF1 /* Pods-DopamineDetoxSelfControl.debug.xcconfig */;
+			baseConfigurationReference = A2483683EC726A3B775C4F97 /* Pods-DopamineDetoxSelfControl.debug.xcconfig */;
 			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = DopamineDetoxSelfControl/DopamineDetoxSelfControl.entitlements;
@@ -481,7 +694,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0;
+				MARKETING_VERSION = 1.0.0;
 				OTHER_LDFLAGS = (
 					"$(inherited)",
 					"-ObjC",
@@ -490,6 +703,7 @@
 				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_DEBUG";
 				PRODUCT_BUNDLE_IDENTIFIER = com.danielian.selfcontrol.dopaminedetox;
 				PRODUCT_NAME = DopamineDetoxSelfControl;
+				REACT_NATIVE_DEVICE_ACTIVITY_APP_GROUP = group.com.danielian.selfcontrol.dopaminedetox;
 				SWIFT_OBJC_BRIDGING_HEADER = "DopamineDetoxSelfControl/DopamineDetoxSelfControl-Bridging-Header.h";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 5.0;
@@ -500,8 +714,9 @@
 		};
 		13B07F951A680F5B00A75B9A /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 7A9EF519F7892BDD44C379B9 /* Pods-DopamineDetoxSelfControl.release.xcconfig */;
+			baseConfigurationReference = F7B9385806D958E4050BC3A9 /* Pods-DopamineDetoxSelfControl.release.xcconfig */;
 			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = DopamineDetoxSelfControl/DopamineDetoxSelfControl.entitlements;
@@ -512,7 +727,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0;
+				MARKETING_VERSION = 1.0.0;
 				OTHER_LDFLAGS = (
 					"$(inherited)",
 					"-ObjC",
@@ -521,38 +736,13 @@
 				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_RELEASE";
 				PRODUCT_BUNDLE_IDENTIFIER = com.danielian.selfcontrol.dopaminedetox;
 				PRODUCT_NAME = DopamineDetoxSelfControl;
+				REACT_NATIVE_DEVICE_ACTIVITY_APP_GROUP = group.com.danielian.selfcontrol.dopaminedetox;
 				SWIFT_OBJC_BRIDGING_HEADER = "DopamineDetoxSelfControl/DopamineDetoxSelfControl-Bridging-Header.h";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = 1;
 				VERSIONING_SYSTEM = "apple-generic";
 			};
 			name = Release;
-		};
-		695B493CBB1D4E64B890A849 /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				CODE_SIGN_ENTITLEMENTS = ScreenTimeReportExtension/ScreenTimeReportExtension.entitlements;
-				CODE_SIGN_STYLE = Automatic;
-				GCC_PREPROCESSOR_DEFINITIONS = (
-					"DEBUG=1",
-					"$(inherited)",
-				);
-				GENERATE_INFOPLIST_FILE = NO;
-				INFOPLIST_FILE = ScreenTimeReportExtension/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/Frameworks",
-					"@executable_path/../../Frameworks",
-				);
-				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_DEBUG";
-				PRODUCT_BUNDLE_IDENTIFIER = com.danielian.selfcontrol.dopaminedetox.ScreenTimeReport;
-				PRODUCT_NAME = ScreenTimeReportExtension;
-				SKIP_INSTALL = YES;
-				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = 1;
-			};
-			name = Debug;
 		};
 		83CBBA201A601CBA00E9B192 /* Debug */ = {
 			isa = XCBuildConfiguration;
@@ -622,6 +812,7 @@
 				LIBRARY_SEARCH_PATHS = "$(SDKROOT)/usr/lib/swift\"$(inherited)\"";
 				MTL_ENABLE_DEBUG_INFO = YES;
 				ONLY_ACTIVE_ARCH = YES;
+				REACT_NATIVE_DEVICE_ACTIVITY_APP_GROUP = group.com.danielian.selfcontrol.dopaminedetox;
 				REACT_NATIVE_PATH = "${PODS_ROOT}/../../node_modules/react-native";
 				SDKROOT = iphoneos;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "$(inherited) DEBUG";
@@ -690,6 +881,7 @@
 				);
 				LIBRARY_SEARCH_PATHS = "$(SDKROOT)/usr/lib/swift\"$(inherited)\"";
 				MTL_ENABLE_DEBUG_INFO = NO;
+				REACT_NATIVE_DEVICE_ACTIVITY_APP_GROUP = group.com.danielian.selfcontrol.dopaminedetox;
 				REACT_NATIVE_PATH = "${PODS_ROOT}/../../node_modules/react-native";
 				SDKROOT = iphoneos;
 				SWIFT_ENABLE_EXPLICIT_MODULES = NO;
@@ -698,27 +890,251 @@
 			};
 			name = Release;
 		};
-		9A6D7668CF944CAEA4364EA1 /* Release */ = {
+		XX2514171D9EC4CCEF6C68XX /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				CODE_SIGN_ENTITLEMENTS = ScreenTimeReportExtension/ScreenTimeReportExtension.entitlements;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CODE_SIGN_ENTITLEMENTS = ../targets/ShieldAction/generated.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				GENERATE_INFOPLIST_FILE = NO;
-				INFOPLIST_FILE = ScreenTimeReportExtension/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = ../targets/ShieldAction/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = ShieldAction;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 					"@executable_path/../../Frameworks",
 				);
+				MARKETING_VERSION = 1.0.0;
+				MTL_FAST_MATH = YES;
 				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_RELEASE";
-				PRODUCT_BUNDLE_IDENTIFIER = com.danielian.selfcontrol.dopaminedetox.ScreenTimeReport;
-				PRODUCT_NAME = ScreenTimeReportExtension;
+				PRODUCT_BUNDLE_IDENTIFIER = com.danielian.selfcontrol.dopaminedetox.ShieldAction;
+				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
 				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = 1;
+				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Release;
+		};
+		XX340879DFEFB0E2A54E54XX /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CODE_SIGN_ENTITLEMENTS = ../targets/ShieldConfiguration/generated.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = ../targets/ShieldConfiguration/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = ShieldConfiguration;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0.0;
+				MTL_FAST_MATH = YES;
+				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_RELEASE";
+				PRODUCT_BUNDLE_IDENTIFIER = com.danielian.selfcontrol.dopaminedetox.ShieldConfiguration;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		XX9172EFAEED310E5EF0F2XX /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CODE_SIGN_ENTITLEMENTS = ../targets/ActivityMonitorExtension/generated.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = ../targets/ActivityMonitorExtension/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = ActivityMonitorExtension;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0.0;
+				MTL_FAST_MATH = YES;
+				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_RELEASE";
+				PRODUCT_BUNDLE_IDENTIFIER = com.danielian.selfcontrol.dopaminedetox.ActivityMonitorExtension;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		XXCA8C513A8AA2488D808AXX /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CODE_SIGN_ENTITLEMENTS = ../targets/ShieldConfiguration/generated.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = ../targets/ShieldConfiguration/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = ShieldConfiguration;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_DEBUG";
+				PRODUCT_BUNDLE_IDENTIFIER = com.danielian.selfcontrol.dopaminedetox.ShieldConfiguration;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		XXE8150696D9E5E4628FB8XX /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CODE_SIGN_ENTITLEMENTS = ../targets/ActivityMonitorExtension/generated.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = ../targets/ActivityMonitorExtension/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = ActivityMonitorExtension;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_DEBUG";
+				PRODUCT_BUNDLE_IDENTIFIER = com.danielian.selfcontrol.dopaminedetox.ActivityMonitorExtension;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		XXEDDC853B35AFC82DA88CXX /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CODE_SIGN_ENTITLEMENTS = ../targets/ShieldAction/generated.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = ../targets/ShieldAction/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = ShieldAction;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_DEBUG";
+				PRODUCT_BUNDLE_IDENTIFIER = com.danielian.selfcontrol.dopaminedetox.ShieldAction;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
 		};
 /* End XCBuildConfiguration section */
 
@@ -741,11 +1157,29 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		AA1B320101EC4FF29CB9F4CA /* Build configuration list for PBXNativeTarget "ScreenTimeReportExtension" */ = {
+		XX121C1E9425242DC21E45XX /* Build configuration list for PBXNativeTarget "ActivityMonitorExtension" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				695B493CBB1D4E64B890A849 /* Debug */,
-				9A6D7668CF944CAEA4364EA1 /* Release */,
+				XXE8150696D9E5E4628FB8XX /* Debug */,
+				XX9172EFAEED310E5EF0F2XX /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		XX307ED51AD6B35C479AD4XX /* Build configuration list for PBXNativeTarget "ShieldConfiguration" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				XXCA8C513A8AA2488D808AXX /* Debug */,
+				XX340879DFEFB0E2A54E54XX /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		XXA505D2B5A557266A3E84XX /* Build configuration list for PBXNativeTarget "ShieldAction" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				XXEDDC853B35AFC82DA88CXX /* Debug */,
+				XX2514171D9EC4CCEF6C68XX /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

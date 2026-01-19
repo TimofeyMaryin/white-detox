@@ -1,69 +1,165 @@
-import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode, useRef } from 'react';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { AppState, AppStateStatus } from 'react-native';
-import { BlockerState, BlockerSchedule } from '@/types/blocker';
-import ScreenTimeModule from '@/modules/screen-time';
-import FamilyActivityPickerModule from '@/modules/family-activity-picker';
+/**
+ * Blocker Context
+ *
+ * Global state management for app blocking functionality.
+ * Manages blocking state, schedules, and coordinates with DeviceActivity API.
+ *
+ * @module contexts/blocker-context
+ */
 
-const BLOCKER_STATE_KEY = '@blocker_state';
-const BLOCKER_SCHEDULES_KEY = '@blocker_schedules';
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  useCallback,
+  ReactNode,
+  useRef,
+} from 'react';
+import { AppState, AppStateStatus, Platform } from 'react-native';
+import { AuthorizationStatus, AuthorizationStatusType } from 'react-native-device-activity';
+
+import { BlockerState, BlockerSchedule } from '@/types/blocker';
+import deviceActivityService from '@/services/device-activity.service';
+import storageService from '@/services/storage.service';
+
+// ============================================================================
+// Types
+// ============================================================================
 
 interface BlockerContextType {
+  /** Current blocking state */
   state: BlockerState;
+  /** All saved schedules */
   schedules: BlockerSchedule[];
+  /** Whether initial data is loading */
   isLoading: boolean;
-  startBlocking: () => Promise<void>;
+  /** Screen Time authorization status */
+  authorizationStatus: AuthorizationStatusType;
+  /** Request Screen Time authorization */
+  requestAuthorization: () => Promise<void>;
+  /** Start blocking apps (optionally for specific schedule) */
+  startBlocking: (scheduleId?: string) => Promise<void>;
+  /** Stop blocking and save accumulated time */
   stopBlocking: () => Promise<void>;
+  /** Pause blocking (keeps time accumulated) */
   pauseBlocking: () => Promise<void>;
+  /** Resume paused blocking */
   resumeBlocking: () => Promise<void>;
+  /** Add a new schedule */
   addSchedule: (schedule: BlockerSchedule) => Promise<void>;
+  /** Update an existing schedule */
   updateSchedule: (id: string, updates: Partial<BlockerSchedule>) => Promise<void>;
+  /** Delete a schedule and stop its monitoring */
   deleteSchedule: (id: string) => Promise<void>;
+  /** Refresh schedules from storage */
   refreshSchedules: () => Promise<void>;
 }
 
-const BlockerContext = createContext<BlockerContextType | null>(null);
+// ============================================================================
+// Helpers
+// ============================================================================
 
-// Helper function to calculate elapsed time from startedAt
-const calculateElapsedTime = (startedAt: number | undefined, accumulatedTime: number = 0): number => {
+/**
+ * Calculate total elapsed time since blocking started
+ *
+ * @param startedAt - Timestamp when blocking started
+ * @param accumulatedTime - Time accumulated before current session
+ * @returns Total elapsed time in seconds
+ */
+function calculateElapsedTime(startedAt: number | undefined, accumulatedTime = 0): number {
   if (!startedAt) return accumulatedTime;
   const now = Date.now();
   const elapsed = Math.floor((now - startedAt) / 1000);
   return accumulatedTime + elapsed;
-};
+}
 
-export function BlockerProvider({ children }: { children: ReactNode }) {
-  const [state, setState] = useState<BlockerState>({
+/**
+ * Create default blocker state
+ */
+function createDefaultState(): BlockerState {
+  return {
     isBlocking: false,
     isPaused: false,
     savedTime: 0,
-  });
+  };
+}
+
+// ============================================================================
+// Context
+// ============================================================================
+
+const BlockerContext = createContext<BlockerContextType | null>(null);
+
+// ============================================================================
+// Provider
+// ============================================================================
+
+interface BlockerProviderProps {
+  children: ReactNode;
+}
+
+export function BlockerProvider({ children }: BlockerProviderProps) {
+  const [state, setState] = useState<BlockerState>(createDefaultState());
   const [schedules, setSchedules] = useState<BlockerSchedule[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [authorizationStatus, setAuthorizationStatus] = useState<AuthorizationStatusType>(
+    AuthorizationStatus.notDetermined
+  );
+
   const appStateRef = useRef(AppState.currentState);
 
-  // Load state from storage
+  // --------------------------------------------------------------------------
+  // Initialization
+  // --------------------------------------------------------------------------
+
   useEffect(() => {
-    loadState();
+    loadData();
+
+    if (Platform.OS === 'ios') {
+      setAuthorizationStatus(deviceActivityService.getAuthorizationStatus());
+    }
   }, []);
 
-  // Handle app state changes (foreground/background)
+  // Listen for authorization status changes
+  useEffect(() => {
+    if (Platform.OS !== 'ios') return;
+
+    const subscription = deviceActivityService.onAuthorizationStatusChange((status) => {
+      setAuthorizationStatus(status);
+    });
+
+    return () => subscription.remove();
+  }, []);
+
+  // Listen for device activity monitor events (for debugging)
+  useEffect(() => {
+    if (Platform.OS !== 'ios') return;
+
+    const subscription = deviceActivityService.onMonitorEvent((event) => {
+      console.log('[BlockerContext] Monitor event:', event.callbackName);
+    });
+
+    return () => subscription.remove();
+  }, []);
+
+  // --------------------------------------------------------------------------
+  // App State Handling
+  // --------------------------------------------------------------------------
+
   useEffect(() => {
     const handleAppStateChange = (nextAppState: AppStateStatus) => {
-      console.log('[DETOX_DEBUG] AppState changed:', appStateRef.current, '->', nextAppState);
-      
       // When app comes to foreground, recalculate elapsed time
       if (appStateRef.current.match(/inactive|background/) && nextAppState === 'active') {
         setState((prev) => {
           if (prev.isBlocking && !prev.isPaused && prev.startedAt) {
             const newSavedTime = calculateElapsedTime(prev.startedAt, prev.accumulatedTime);
-            console.log('[DETOX_DEBUG] Recalculated savedTime on foreground:', newSavedTime);
             return { ...prev, savedTime: newSavedTime };
           }
           return prev;
         });
       }
-      
+
       appStateRef.current = nextAppState;
     };
 
@@ -71,18 +167,19 @@ export function BlockerProvider({ children }: { children: ReactNode }) {
     return () => subscription.remove();
   }, []);
 
-  // Update saved time every second when blocking (only updates display, real time is calculated from startedAt)
+  // --------------------------------------------------------------------------
+  // Timer
+  // --------------------------------------------------------------------------
+
   useEffect(() => {
     if (!state.isBlocking || state.isPaused) return;
 
     const interval = setInterval(() => {
       setState((prev) => {
-        // Calculate real elapsed time from startedAt
         if (prev.startedAt) {
           const newSavedTime = calculateElapsedTime(prev.startedAt, prev.accumulatedTime);
           return { ...prev, savedTime: newSavedTime };
         }
-        // Fallback to incrementing (shouldn't happen with new logic)
         return { ...prev, savedTime: prev.savedTime + 1 };
       });
     }, 1000);
@@ -90,224 +187,195 @@ export function BlockerProvider({ children }: { children: ReactNode }) {
     return () => clearInterval(interval);
   }, [state.isBlocking, state.isPaused]);
 
-  const loadState = async () => {
-    console.log('[DETOX_DEBUG] loadState: Starting to load state from AsyncStorage');
-    try {
-      const [savedState, savedSchedules] = await Promise.all([
-        AsyncStorage.getItem(BLOCKER_STATE_KEY),
-        AsyncStorage.getItem(BLOCKER_SCHEDULES_KEY),
-      ]);
+  // --------------------------------------------------------------------------
+  // Data Loading
+  // --------------------------------------------------------------------------
 
-      console.log('[DETOX_DEBUG] loadState: Raw savedState:', savedState);
-      console.log('[DETOX_DEBUG] loadState: Raw savedSchedules:', savedSchedules);
+  const loadData = async () => {
+    try {
+      const { state: savedState, schedules: savedSchedules } = await storageService.loadAll();
 
       if (savedState) {
-        const parsed: BlockerState = JSON.parse(savedState);
-        console.log('[DETOX_DEBUG] loadState: Parsed state:', parsed);
-        
-        // If blocking is active, recalculate elapsed time since app was closed
-        if (parsed.isBlocking && !parsed.isPaused && parsed.startedAt) {
-          const newSavedTime = calculateElapsedTime(parsed.startedAt, parsed.accumulatedTime);
-          console.log('[DETOX_DEBUG] loadState: Recalculated savedTime:', newSavedTime, 'from startedAt:', parsed.startedAt);
-          parsed.savedTime = newSavedTime;
+        // Recalculate elapsed time if blocking was active
+        if (savedState.isBlocking && !savedState.isPaused && savedState.startedAt) {
+          savedState.savedTime = calculateElapsedTime(
+            savedState.startedAt,
+            savedState.accumulatedTime
+          );
         }
-        
-        setState(parsed);
+        setState(savedState);
       }
 
-      if (savedSchedules) {
-        const parsed = JSON.parse(savedSchedules);
-        console.log('[DETOX_DEBUG] loadState: Parsed schedules count:', parsed.length);
-        console.log('[DETOX_DEBUG] loadState: Schedules:', JSON.stringify(parsed, null, 2));
-        setSchedules(parsed);
-      }
+      setSchedules(savedSchedules);
     } catch (error) {
-      console.error('[DETOX_DEBUG] loadState: Error loading blocker state:', error);
+      console.error('[BlockerContext] Error loading data:', error);
     } finally {
-      console.log('[DETOX_DEBUG] loadState: Finished loading, setting isLoading=false');
       setIsLoading(false);
     }
   };
 
   const refreshSchedules = useCallback(async () => {
-    try {
-      const savedSchedules = await AsyncStorage.getItem(BLOCKER_SCHEDULES_KEY);
-      if (savedSchedules) {
-        setSchedules(JSON.parse(savedSchedules));
-      }
-    } catch (error) {
-      console.error('Error refreshing schedules:', error);
-    }
+    const savedSchedules = await storageService.getSchedules();
+    setSchedules(savedSchedules);
   }, []);
 
-  const saveSchedules = async (newSchedules: BlockerSchedule[]) => {
-    console.log('[DETOX_DEBUG] saveSchedules: Saving schedules, count:', newSchedules.length);
-    console.log('[DETOX_DEBUG] saveSchedules: Schedules to save:', JSON.stringify(newSchedules, null, 2));
-    try {
-      await AsyncStorage.setItem(BLOCKER_SCHEDULES_KEY, JSON.stringify(newSchedules));
-      console.log('[DETOX_DEBUG] saveSchedules: AsyncStorage.setItem completed');
-      setSchedules(newSchedules);
-      console.log('[DETOX_DEBUG] saveSchedules: setSchedules called, state should update');
-    } catch (error) {
-      console.error('[DETOX_DEBUG] saveSchedules: Error saving schedules:', error);
-    }
-  };
+  // --------------------------------------------------------------------------
+  // Authorization
+  // --------------------------------------------------------------------------
 
-  const startBlocking = useCallback(async () => {
-    const now = Date.now();
-    const newState: BlockerState = {
-      ...state,
-      isBlocking: true,
-      isPaused: false,
-      startedAt: now, // Record when blocking started
-      accumulatedTime: state.savedTime, // Keep any previously saved time
-      savedTime: state.savedTime, // Start from current saved time
-    };
-    console.log('[DETOX_DEBUG] startBlocking: Starting with startedAt:', now);
-    setState(newState);
-    await AsyncStorage.setItem(BLOCKER_STATE_KEY, JSON.stringify(newState));
-  }, [state]);
+  const requestAuthorization = useCallback(async () => {
+    if (Platform.OS !== 'ios') return;
+
+    const status = await deviceActivityService.requestAuthorization();
+    setAuthorizationStatus(status);
+  }, []);
+
+  // --------------------------------------------------------------------------
+  // Blocking Controls
+  // --------------------------------------------------------------------------
+
+  const startBlocking = useCallback(
+    async (scheduleId?: string) => {
+      const now = Date.now();
+
+      const newState: BlockerState = {
+        ...state,
+        isBlocking: true,
+        isPaused: false,
+        startedAt: now,
+        currentScheduleId: scheduleId,
+        accumulatedTime: state.savedTime,
+        savedTime: state.savedTime,
+      };
+
+      setState(newState);
+      await storageService.saveBlockerState(newState);
+
+      // Block apps if schedule has selection
+      if (Platform.OS === 'ios' && scheduleId) {
+        const schedule = schedules.find((s) => s.id === scheduleId);
+        if (schedule?.familyActivitySelectionId) {
+          deviceActivityService.blockApps(schedule.familyActivitySelectionId);
+        }
+      }
+    },
+    [state, schedules]
+  );
 
   const stopBlocking = useCallback(async () => {
-    // Calculate final saved time before stopping
-    const finalSavedTime = state.startedAt 
+    const finalSavedTime = state.startedAt
       ? calculateElapsedTime(state.startedAt, state.accumulatedTime)
       : state.savedTime;
-    
+
     const newState: BlockerState = {
       ...state,
       isBlocking: false,
       isPaused: false,
       startedAt: undefined,
-      accumulatedTime: finalSavedTime, // Save accumulated time for next session
+      currentScheduleId: undefined,
+      accumulatedTime: finalSavedTime,
       savedTime: finalSavedTime,
     };
-    console.log('[DETOX_DEBUG] stopBlocking: Final savedTime:', finalSavedTime);
+
     setState(newState);
-    await AsyncStorage.setItem(BLOCKER_STATE_KEY, JSON.stringify(newState));
+    await storageService.saveBlockerState(newState);
+
+    // Remove all blocks
+    if (Platform.OS === 'ios') {
+      deviceActivityService.unblockAllApps();
+    }
   }, [state]);
 
   const pauseBlocking = useCallback(async () => {
-    // Calculate time saved so far and store it
-    const currentSavedTime = state.startedAt 
+    const currentSavedTime = state.startedAt
       ? calculateElapsedTime(state.startedAt, state.accumulatedTime)
       : state.savedTime;
-    
+
     const newState: BlockerState = {
       ...state,
       isPaused: true,
       pausedAt: new Date(),
-      startedAt: undefined, // Stop the timer
-      accumulatedTime: currentSavedTime, // Store accumulated time
+      startedAt: undefined,
+      accumulatedTime: currentSavedTime,
       savedTime: currentSavedTime,
     };
-    console.log('[DETOX_DEBUG] pauseBlocking: Paused with savedTime:', currentSavedTime);
+
     setState(newState);
-    await AsyncStorage.setItem(BLOCKER_STATE_KEY, JSON.stringify(newState));
+    await storageService.saveBlockerState(newState);
   }, [state]);
 
   const resumeBlocking = useCallback(async () => {
     const now = Date.now();
+
     const newState: BlockerState = {
       ...state,
       isPaused: false,
       pausedAt: undefined,
-      startedAt: now, // Restart the timer
-      // accumulatedTime stays the same - we continue counting from where we left off
+      startedAt: now,
     };
-    console.log('[DETOX_DEBUG] resumeBlocking: Resumed with startedAt:', now, 'accumulatedTime:', state.accumulatedTime);
+
     setState(newState);
-    await AsyncStorage.setItem(BLOCKER_STATE_KEY, JSON.stringify(newState));
+    await storageService.saveBlockerState(newState);
   }, [state]);
 
-  const addSchedule = useCallback(async (schedule: BlockerSchedule) => {
-    console.log('[DETOX_DEBUG] addSchedule: Called with schedule:', JSON.stringify(schedule, null, 2));
-    console.log('[DETOX_DEBUG] addSchedule: Current schedules count:', schedules.length);
-    const newSchedules = [...schedules, schedule];
-    console.log('[DETOX_DEBUG] addSchedule: New schedules count:', newSchedules.length);
-    await saveSchedules(newSchedules);
-    console.log('[DETOX_DEBUG] addSchedule: saveSchedules completed');
-    
-    // Создать DeviceActivity расписание для автоматического выполнения
-    if (schedule.isActive && schedule.apps.length > 0 && schedule.daysOfWeek.length > 0) {
-      try {
-        console.log('[DETOX_DEBUG] addSchedule: Creating DeviceActivity schedule');
-        await ScreenTimeModule.createDeviceActivitySchedule(
-          schedule.id,
-          schedule.startTime,
-          schedule.endTime,
-          schedule.daysOfWeek
-        );
-        console.log('[DETOX_DEBUG] addSchedule: DeviceActivity schedule created');
-      } catch (error) {
-        console.error('[DETOX_DEBUG] addSchedule: Error creating DeviceActivity schedule:', error);
-      }
-    }
-  }, [schedules]);
+  // --------------------------------------------------------------------------
+  // Schedule Management
+  // --------------------------------------------------------------------------
 
-  const updateSchedule = useCallback(async (id: string, updates: Partial<BlockerSchedule>) => {
-    console.log('[DETOX_DEBUG] updateSchedule: Called with id:', id);
-    console.log('[DETOX_DEBUG] updateSchedule: Updates:', JSON.stringify(updates, null, 2));
-    const existingSchedule = schedules.find((s) => s.id === id);
-    console.log('[DETOX_DEBUG] updateSchedule: Existing schedule found:', !!existingSchedule);
-    console.log('[DETOX_DEBUG] updateSchedule: Existing schedule:', JSON.stringify(existingSchedule, null, 2));
-    const updatedSchedule = existingSchedule ? { ...existingSchedule, ...updates } : null;
-    console.log('[DETOX_DEBUG] updateSchedule: Merged schedule:', JSON.stringify(updatedSchedule, null, 2));
-    
-    const newSchedules = schedules.map((s) => (s.id === id ? { ...s, ...updates } : s));
-    console.log('[DETOX_DEBUG] updateSchedule: New schedules:', JSON.stringify(newSchedules, null, 2));
-    await saveSchedules(newSchedules);
-    console.log('[DETOX_DEBUG] updateSchedule: saveSchedules completed');
-    
-    // Обновить DeviceActivity расписание
-    if (updatedSchedule) {
-      try {
-        // Удалить старое расписание
-        console.log('[DETOX_DEBUG] updateSchedule: Removing old DeviceActivity schedule');
-        await ScreenTimeModule.removeDeviceActivitySchedule(id);
-        
-        // Создать новое расписание, если оно активно
-        if (updatedSchedule.isActive && updatedSchedule.apps.length > 0 && updatedSchedule.daysOfWeek.length > 0) {
-          console.log('[DETOX_DEBUG] updateSchedule: Creating new DeviceActivity schedule');
-          await ScreenTimeModule.createDeviceActivitySchedule(
-            updatedSchedule.id,
-            updatedSchedule.startTime,
-            updatedSchedule.endTime,
-            updatedSchedule.daysOfWeek
-          );
-        }
-      } catch (error) {
-        console.error('[DETOX_DEBUG] updateSchedule: Error updating DeviceActivity schedule:', error);
-      }
-    }
-  }, [schedules]);
+  const addSchedule = useCallback(
+    async (schedule: BlockerSchedule) => {
+      const newSchedules = [...schedules, schedule];
+      await storageService.saveSchedules(newSchedules);
+      setSchedules(newSchedules);
 
-  const deleteSchedule = useCallback(async (id: string) => {
-    console.log('[DETOX_DEBUG] deleteSchedule: Called with id:', id);
-    console.log('[DETOX_DEBUG] deleteSchedule: Current schedules count:', schedules.length);
-    console.log('[DETOX_DEBUG] deleteSchedule: Current blocking state:', state.isBlocking, 'currentScheduleId:', state.currentScheduleId);
-    
-    try {
-      // First, remove the DeviceActivity schedule and clear ManagedSettingsStore
-      if (ScreenTimeModule && typeof ScreenTimeModule.removeDeviceActivitySchedule === 'function') {
-        console.log('[DETOX_DEBUG] deleteSchedule: Removing DeviceActivity schedule');
-        await ScreenTimeModule.removeDeviceActivitySchedule(id);
+      // Start monitoring if schedule is active
+      if (
+        Platform.OS === 'ios' &&
+        schedule.isActive &&
+        schedule.familyActivitySelectionId &&
+        schedule.daysOfWeek.length > 0
+      ) {
+        await deviceActivityService.startMonitoring(schedule);
       }
-      
-      // Clear the selection for this schedule in the native module
-      if (FamilyActivityPickerModule && typeof FamilyActivityPickerModule.clearSelectionForScheduleId === 'function') {
-        console.log('[DETOX_DEBUG] deleteSchedule: Clearing selection for schedule');
-        await FamilyActivityPickerModule.clearSelectionForScheduleId(id);
+    },
+    [schedules]
+  );
+
+  const updateSchedule = useCallback(
+    async (id: string, updates: Partial<BlockerSchedule>) => {
+      const existingSchedule = schedules.find((s) => s.id === id);
+      if (!existingSchedule) return;
+
+      const updatedSchedule = { ...existingSchedule, ...updates };
+      const newSchedules = schedules.map((s) => (s.id === id ? updatedSchedule : s));
+
+      await storageService.saveSchedules(newSchedules);
+      setSchedules(newSchedules);
+
+      // Update monitoring
+      if (Platform.OS === 'ios') {
+        await deviceActivityService.updateMonitoring(existingSchedule, updatedSchedule);
       }
-      
-      // If blocking is active and this schedule is being blocked, stop the timer
+    },
+    [schedules]
+  );
+
+  const deleteSchedule = useCallback(
+    async (id: string) => {
+      const scheduleToDelete = schedules.find((s) => s.id === id);
+
+      // Stop monitoring and clear blocks
+      if (Platform.OS === 'ios' && scheduleToDelete?.daysOfWeek) {
+        deviceActivityService.stopMonitoring(id, scheduleToDelete.daysOfWeek);
+        deviceActivityService.unblockAllApps();
+      }
+
+      // Stop timer if blocking is active (only one schedule allowed)
       if (state.isBlocking) {
-        console.log('[DETOX_DEBUG] deleteSchedule: Blocking is active, stopping timer');
-        // Calculate final saved time before stopping
-        const finalSavedTime = state.startedAt 
+        const finalSavedTime = state.startedAt
           ? calculateElapsedTime(state.startedAt, state.accumulatedTime)
           : state.savedTime;
-        
+
         const newState: BlockerState = {
           ...state,
           isBlocking: false,
@@ -317,19 +385,22 @@ export function BlockerProvider({ children }: { children: ReactNode }) {
           accumulatedTime: finalSavedTime,
           savedTime: finalSavedTime,
         };
-        console.log('[DETOX_DEBUG] deleteSchedule: Stopping blocking, final savedTime:', finalSavedTime);
+
         setState(newState);
-        await AsyncStorage.setItem(BLOCKER_STATE_KEY, JSON.stringify(newState));
+        await storageService.saveBlockerState(newState);
       }
-    } catch (error) {
-      console.error('[DETOX_DEBUG] deleteSchedule: Error removing DeviceActivity schedule:', error);
-    }
-    
-    const newSchedules = schedules.filter((s) => s.id !== id);
-    console.log('[DETOX_DEBUG] deleteSchedule: New schedules count:', newSchedules.length);
-    await saveSchedules(newSchedules);
-    console.log('[DETOX_DEBUG] deleteSchedule: Completed');
-  }, [schedules, state]);
+
+      // Remove from schedules
+      const newSchedules = schedules.filter((s) => s.id !== id);
+      await storageService.saveSchedules(newSchedules);
+      setSchedules(newSchedules);
+    },
+    [schedules, state]
+  );
+
+  // --------------------------------------------------------------------------
+  // Render
+  // --------------------------------------------------------------------------
 
   return (
     <BlockerContext.Provider
@@ -337,6 +408,8 @@ export function BlockerProvider({ children }: { children: ReactNode }) {
         state,
         schedules,
         isLoading,
+        authorizationStatus,
+        requestAuthorization,
         startBlocking,
         stopBlocking,
         pauseBlocking,
@@ -352,10 +425,31 @@ export function BlockerProvider({ children }: { children: ReactNode }) {
   );
 }
 
-export function useBlocker() {
+// ============================================================================
+// Hook
+// ============================================================================
+
+/**
+ * Hook to access blocker context
+ *
+ * @returns Blocker context with state and actions
+ * @throws Error if used outside BlockerProvider
+ *
+ * @example
+ * ```tsx
+ * const { state, startBlocking, stopBlocking } = useBlocker();
+ *
+ * if (state.isBlocking) {
+ *   return <BlockingActive onStop={stopBlocking} />;
+ * }
+ * ```
+ */
+export function useBlocker(): BlockerContextType {
   const context = useContext(BlockerContext);
+
   if (!context) {
     throw new Error('useBlocker must be used within a BlockerProvider');
   }
+
   return context;
 }

@@ -1,10 +1,15 @@
 /**
- * Below are the colors that are used in the app. The colors are defined in the light and dark mode.
- * There are many other ways to style your app. For example, [Nativewind](https://www.nativewind.dev/), [Tamagui](https://tamagui.dev/), [unistyles](https://reactnativeunistyles.vercel.app), etc.
+ * Theme Constants
+ *
+ * Defines colors and fonts used throughout the app.
+ * Currently uses a dark-only theme with lime green accent.
+ *
+ * @module constants/theme
  */
 
 import { Platform } from 'react-native';
 
+/** Primary accent color (lime green) */
 const primaryColor = '#00EB3F';
 
 export const Colors = {

@@ -1,3 +1,12 @@
+/**
+ * Adapty Native Module
+ *
+ * Wrapper for native Adapty SDK.
+ * Provides fallback implementation for development.
+ *
+ * @module modules/adapty
+ */
+
 import { NativeModules, Platform } from 'react-native';
 
 interface AdaptyModuleInterface {

@@ -1,3 +1,12 @@
+/**
+ * Firebase Analytics Module
+ *
+ * Wrapper for Firebase Analytics SDK.
+ * Checks initialization before calling methods.
+ *
+ * @module modules/firebase
+ */
+
 import analytics from '@react-native-firebase/analytics';
 import app from '@react-native-firebase/app';
 

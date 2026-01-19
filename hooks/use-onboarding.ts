@@ -1,8 +1,22 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
+/**
+ * Onboarding Hook
+ *
+ * Manages onboarding completion state.
+ * Persists state to AsyncStorage.
+ *
+ * @module hooks/use-onboarding
+ */
+
 import { useEffect, useState } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const ONBOARDING_KEY = '@onboarding_completed';
 
+/**
+ * Hook to manage onboarding flow state
+ *
+ * @returns Onboarding state and actions
+ */
 export function useOnboarding() {
   const [isOnboardingCompleted, setIsOnboardingCompleted] = useState<boolean | null>(null);
 

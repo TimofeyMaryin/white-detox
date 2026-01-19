@@ -1,11 +1,21 @@
+/**
+ * Time Dial Component
+ *
+ * Displays an analog clock-style dial showing saved time.
+ *
+ * @module components/time-dial
+ */
+
 import React from 'react';
 import { View, StyleSheet, Dimensions } from 'react-native';
+
 import { ThemedText } from './themed-text';
 import { Colors } from '@/constants/theme';
 import { formatTime } from '@/utils/timeFormatter';
 
 interface TimeDialProps {
-  savedTime: number; // in seconds
+  /** Saved time in seconds */
+  savedTime: number;
 }
 
 const { width } = Dimensions.get('window');

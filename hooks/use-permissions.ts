@@ -1,11 +1,29 @@
-import { useState, useEffect } from 'react';
-import { Platform, Linking, Alert } from 'react-native';
-import ScreenTimeModule from '@/modules/screen-time';
+/**
+ * Permissions Hook
+ *
+ * Manages app permissions including Screen Time, notifications, and location.
+ * Provides status checking and request functions.
+ *
+ * @module hooks/use-permissions
+ */
 
+import { useState, useEffect } from 'react';
+import { Platform, Alert } from 'react-native';
+import * as DeviceActivity from 'react-native-device-activity';
+
+/** Possible states for a permission */
+type PermissionState = 'granted' | 'denied' | 'not-determined' | 'checking';
+
+/**
+ * Status of all app permissions
+ */
 export interface PermissionStatus {
-  screenTime: 'granted' | 'denied' | 'not-determined' | 'checking';
-  notifications: 'granted' | 'denied' | 'not-determined' | 'checking';
-  location: 'granted' | 'denied' | 'not-determined' | 'checking';
+  /** Screen Time / Family Controls permission */
+  screenTime: PermissionState;
+  /** Push notification permission */
+  notifications: PermissionState;
+  /** Location permission (not currently used) */
+  location: PermissionState;
 }
 
 export function usePermissions() {
@@ -16,7 +34,6 @@ export function usePermissions() {
   }));
 
   useEffect(() => {
-    // Delay initialization to ensure component is mounted
     const initTimer = setTimeout(() => {
       checkAllPermissions();
     }, 0);
@@ -39,12 +56,20 @@ export function usePermissions() {
   const checkScreenTimePermission = async () => {
     try {
       setPermissions((prev) => ({ ...prev, screenTime: 'checking' }));
-      if (ScreenTimeModule && typeof ScreenTimeModule.isAuthorized === 'function') {
-        const isAuthorized = await ScreenTimeModule.isAuthorized();
-        setPermissions((prev) => ({
-          ...prev,
-          screenTime: isAuthorized ? 'granted' : 'denied',
-        }));
+      
+      if (Platform.OS === 'ios' && DeviceActivity.isAvailable()) {
+        const status = DeviceActivity.getAuthorizationStatus();
+        
+        let screenTimeStatus: 'granted' | 'denied' | 'not-determined';
+        if (status === DeviceActivity.AuthorizationStatus.approved) {
+          screenTimeStatus = 'granted';
+        } else if (status === DeviceActivity.AuthorizationStatus.denied) {
+          screenTimeStatus = 'denied';
+        } else {
+          screenTimeStatus = 'not-determined';
+        }
+        
+        setPermissions((prev) => ({ ...prev, screenTime: screenTimeStatus }));
       } else {
         setPermissions((prev) => ({ ...prev, screenTime: 'not-determined' }));
       }
@@ -58,12 +83,10 @@ export function usePermissions() {
     try {
       setPermissions((prev) => ({ ...prev, notifications: 'checking' }));
       
-      // Try to get notifications module
       let Notifications;
       try {
         Notifications = require('expo-notifications');
       } catch {
-        // Module not available
         setPermissions((prev) => ({ ...prev, notifications: 'not-determined' }));
         return;
       }
@@ -86,8 +109,6 @@ export function usePermissions() {
   const checkLocationPermission = async () => {
     try {
       setPermissions((prev) => ({ ...prev, location: 'checking' }));
-      // Location permission check would require expo-location
-      // For now, we'll set it as not-determined
       setPermissions((prev) => ({ ...prev, location: 'not-determined' }));
     } catch (error) {
       console.error('Error checking location permission:', error);
@@ -98,17 +119,25 @@ export function usePermissions() {
   const requestScreenTimePermission = async () => {
     try {
       setPermissions((prev) => ({ ...prev, screenTime: 'checking' }));
-      if (ScreenTimeModule && typeof ScreenTimeModule.requestAuthorization === 'function') {
-        const granted = await ScreenTimeModule.requestAuthorization();
+      
+      if (Platform.OS === 'ios' && DeviceActivity.isAvailable()) {
+        await DeviceActivity.requestAuthorization('individual');
         
+        // Poll for status since it might not update immediately
+        const status = await DeviceActivity.pollAuthorizationStatus({
+          pollIntervalMs: 500,
+          maxAttempts: 10,
+        });
+        
+        const granted = status === DeviceActivity.AuthorizationStatus.approved;
         setPermissions((prev) => ({
           ...prev,
           screenTime: granted ? 'granted' : 'denied',
         }));
         
-        await checkScreenTimePermission();
         return granted;
       }
+      
       setPermissions((prev) => ({ ...prev, screenTime: 'not-determined' }));
       return false;
     } catch (error: any) {
@@ -122,7 +151,6 @@ export function usePermissions() {
     try {
       setPermissions((prev) => ({ ...prev, notifications: 'checking' }));
       
-      // Try to get notifications module
       let Notifications;
       try {
         Notifications = require('expo-notifications');
@@ -142,9 +170,7 @@ export function usePermissions() {
           notifications: status === 'granted' ? 'granted' : 'denied',
         }));
         
-        // Re-check permission status to ensure it's up to date
         await checkNotificationPermission();
-        
         return status === 'granted';
       }
       
@@ -152,14 +178,12 @@ export function usePermissions() {
       return false;
     } catch (error: any) {
       console.error('Error requesting notification permission:', error);
-      // Re-check permission status after error
       await checkNotificationPermission();
       return false;
     }
   };
 
   const requestLocationPermission = async () => {
-    // This would require expo-location package
     Alert.alert('Location Permission', 'Location permission is not yet implemented.');
     return false;
   };
@@ -172,4 +196,3 @@ export function usePermissions() {
     requestLocationPermission,
   };
 }
-

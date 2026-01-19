@@ -98,8 +98,6 @@ $1`
               `$1
 
   # Local native modules
-  pod 'ScreenTimeModule', :path => '../modules/screen-time/ios'
-  pod 'FamilyActivityPickerModule', :path => '../modules/family-activity-picker/ios'
   pod 'GrayscaleModule', :path => '../modules/grayscale/ios'
 
   # Use static frameworks for Firebase compatibility

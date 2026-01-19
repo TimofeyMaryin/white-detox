@@ -44,7 +44,13 @@
       "expo-router",
       "@react-native-firebase/app",
       "./plugins/with-ios-firebase-config.js",
-      "./plugins/withScreenTimeReportExtension.js",
+      [
+        "react-native-device-activity",
+        {
+          "appleTeamId": "YOUR_TEAM_ID",
+          "appGroup": "group.com.danielian.selfcontrol.dopaminedetox"
+        }
+      ],
       [
         "expo-splash-screen",
         {

@@ -1,10 +1,23 @@
+/**
+ * Settings Hook
+ *
+ * Manages app settings with persistence.
+ *
+ * @module hooks/use-settings
+ */
+
 import { useState, useEffect, useCallback } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const SETTINGS_KEY = '@app_settings';
 
+/**
+ * Application settings interface
+ */
 export interface AppSettings {
+  /** Whether push notifications are enabled */
   notificationsEnabled: boolean;
+  /** Whether to auto-start blocking on schedule */
   autoStartEnabled: boolean;
 }
 
@@ -13,6 +26,11 @@ const defaultSettings: AppSettings = {
   autoStartEnabled: false,
 };
 
+/**
+ * Hook to manage and persist app settings
+ *
+ * @returns Settings state and update functions
+ */
 export function useSettings() {
   const [settings, setSettings] = useState<AppSettings>(defaultSettings);
   const [isLoading, setIsLoading] = useState(true);

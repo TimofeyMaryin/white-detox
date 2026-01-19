@@ -1,10 +1,21 @@
+/**
+ * Themed Text Component
+ *
+ * Text component that automatically uses theme-appropriate colors.
+ *
+ * @module components/themed-text
+ */
+
 import { StyleSheet, Text, type TextProps } from 'react-native';
 
 import { useThemeColor } from '@/hooks/use-theme-color';
 
 export type ThemedTextProps = TextProps & {
+  /** Override light mode color */
   lightColor?: string;
+  /** Override dark mode color */
   darkColor?: string;
+  /** Text style variant */
   type?: 'default' | 'title' | 'defaultSemiBold' | 'subtitle' | 'link';
 };
 

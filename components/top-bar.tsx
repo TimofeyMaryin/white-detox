@@ -1,10 +1,21 @@
+/**
+ * Top Bar Component
+ *
+ * App header with logo and premium upgrade button.
+ * Only shown to non-premium users.
+ *
+ * @module components/top-bar
+ */
+
 import React from 'react';
 import { StyleSheet, View, TouchableOpacity, Image } from 'react-native';
+
 import { ThemedText } from './themed-text';
 import { IconSymbol } from './ui/icon-symbol';
 import { Colors } from '@/constants/theme';
 
 interface TopBarProps {
+  /** Called when premium button is pressed */
   onPremiumPress?: () => void;
 }
 

@@ -1,80 +1,50 @@
+/**
+ * iOS Activity Picker Component
+ *
+ * Native iOS app selection modal using FamilyControls API.
+ * Allows users to select apps and categories to block.
+ *
+ * @module components/ios-activity-picker
+ */
+
+import { useState, useCallback } from 'react';
+import { Platform, StyleSheet, View, Modal, TouchableOpacity, SafeAreaView } from 'react-native';
+import { DeviceActivitySelectionViewPersisted } from 'react-native-device-activity';
+
 import { Colors } from '@/constants/theme';
-import FamilyActivityPickerModule from '@/modules/family-activity-picker';
-import { useEffect, useState } from 'react';
-import { Platform, StyleSheet } from 'react-native';
+import { ThemedText } from './themed-text';
 
 interface IOSActivityPickerProps {
+  /** Whether the picker modal is visible */
   visible: boolean;
+  /** Called when picker is closed */
   onClose: () => void;
-  onSelect: (appIdentifiers: string[]) => void;
-  selectedApps?: string[];
-  scheduleId?: string;
+  /** Called when selection changes with count info */
+  onSelectionChange?: (metadata: { applicationCount: number; categoryCount: number }) => void;
+  /** Unique ID to persist the selection */
+  familyActivitySelectionId: string;
 }
 
-export function IOSActivityPicker({ visible, onClose, onSelect, selectedApps = [], scheduleId = '' }: IOSActivityPickerProps) {
-  const [isLoading, setIsLoading] = useState(false);
+export function IOSActivityPicker({ 
+  visible, 
+  onClose, 
+  onSelectionChange,
+  familyActivitySelectionId,
+}: IOSActivityPickerProps) {
+  const [selectionInfo, setSelectionInfo] = useState({ applicationCount: 0, categoryCount: 0 });
 
-  console.log('[DETOX_DEBUG] IOSActivityPicker: Rendering, visible:', visible, 'scheduleId:', scheduleId, 'selectedApps:', selectedApps);
+  const handleSelectionChange = useCallback((event: any) => {
+    const metadata = event.nativeEvent;
+    console.log('[DETOX] Selection changed:', metadata);
+    setSelectionInfo({
+      applicationCount: metadata.applicationCount || 0,
+      categoryCount: metadata.categoryCount || 0,
+    });
+    onSelectionChange?.(metadata);
+  }, [onSelectionChange]);
 
-  useEffect(() => {
-    console.log('[DETOX_DEBUG] IOSActivityPicker: useEffect triggered, visible:', visible, 'isLoading:', isLoading);
-    if (visible && Platform.OS === 'ios' && !isLoading) {
-      handlePresentPicker();
-    } else if (!visible) {
-      setIsLoading(false);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [visible]);
-
-  const handlePresentPicker = async () => {
-    console.log('[DETOX_DEBUG] IOSActivityPicker.handlePresentPicker: Called');
-    if (isLoading) {
-      console.log('[DETOX_DEBUG] IOSActivityPicker.handlePresentPicker: Already loading, returning');
-      return;
-    }
-    
-    setIsLoading(true);
-    try {
-      // Check if module is available
-      if (!FamilyActivityPickerModule || typeof FamilyActivityPickerModule.presentFamilyActivityPickerWithScheduleId !== 'function') {
-        // Fallback to old method without scheduleId
-        if (FamilyActivityPickerModule && typeof FamilyActivityPickerModule.presentFamilyActivityPicker === 'function') {
-          console.log('[DETOX_DEBUG] IOSActivityPicker.handlePresentPicker: Calling legacy presentFamilyActivityPicker');
-          const appIdentifiers = await FamilyActivityPickerModule.presentFamilyActivityPicker();
-          console.log('[DETOX_DEBUG] IOSActivityPicker.handlePresentPicker: Legacy picker returned:', appIdentifiers);
-          onSelect(Array.isArray(appIdentifiers) ? appIdentifiers : []);
-          onClose();
-          return;
-        }
-        // Module not available - silently return empty array (native module not built yet)
-        console.log('[DETOX_DEBUG] IOSActivityPicker.handlePresentPicker: Module not available');
-        onSelect([]);
-        setIsLoading(false);
-        onClose();
-        return;
-      }
-      
-      console.log('[DETOX_DEBUG] IOSActivityPicker.handlePresentPicker: Calling presentFamilyActivityPickerWithScheduleId with scheduleId:', scheduleId);
-      // The picker returns the selected app identifiers directly as an array
-      // This promise resolves when user selects apps and presses "Done" or "Cancel"
-      const appIdentifiers = await FamilyActivityPickerModule.presentFamilyActivityPickerWithScheduleId(scheduleId);
-      console.log('[DETOX_DEBUG] IOSActivityPicker.handlePresentPicker: Picker returned:', appIdentifiers);
-      
-      // Always call onSelect with the result (even if empty array)
-      onSelect(Array.isArray(appIdentifiers) ? appIdentifiers : []);
-      
-      // Close the picker after selection is made
-      onClose();
-    } catch (error: any) {
-      console.error('[DETOX_DEBUG] IOSActivityPicker.handlePresentPicker: Error presenting picker:', error);
-      // Silently fail - just return empty array
-      // Don't log errors about child/teen accounts - this is expected for adult accounts
-      // The picker will just show empty list, which is the expected behavior
-      onSelect([]);
-      onClose();
-    } finally {
-      setIsLoading(false);
-    }
+  const handleDone = () => {
+    onClose();
   };
 
   // For non-iOS, don't render anything
@@ -82,8 +52,41 @@ export function IOSActivityPicker({ visible, onClose, onSelect, selectedApps = [
     return null;
   }
 
-  // Don't render anything - the native picker will be shown
-  return null;
+  return (
+    <Modal
+      visible={visible}
+      animationType="slide"
+      presentationStyle="pageSheet"
+    >
+      <SafeAreaView style={styles.container}>
+        <View style={styles.header}>
+          <View style={styles.headerSpacer} />
+          <ThemedText style={styles.title}>Select Apps</ThemedText>
+          <TouchableOpacity onPress={handleDone} style={styles.doneButtonContainer}>
+            <ThemedText style={styles.doneButton}>Done</ThemedText>
+          </TouchableOpacity>
+        </View>
+        
+        <View style={styles.selectionInfo}>
+          <ThemedText style={styles.selectionInfoText}>
+            {selectionInfo.applicationCount > 0 || selectionInfo.categoryCount > 0
+              ? `${selectionInfo.applicationCount} apps, ${selectionInfo.categoryCount} categories selected`
+              : 'No apps selected'}
+          </ThemedText>
+        </View>
+        
+        <View style={styles.pickerContainer}>
+          <DeviceActivitySelectionViewPersisted
+            familyActivitySelectionId={familyActivitySelectionId}
+            onSelectionChange={handleSelectionChange}
+            headerText="Choose apps and categories to block"
+            footerText="Selected apps will be blocked during the scheduled time"
+            style={styles.picker}
+          />
+        </View>
+      </SafeAreaView>
+    </Modal>
+  );
 }
 
 const styles = StyleSheet.create({
@@ -95,42 +98,42 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingTop: 60,
-    paddingBottom: 16,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
     borderBottomWidth: 1,
     borderBottomColor: '#333333',
   },
-  cancelButton: {
-    fontSize: 17,
-    color: Colors.dark.primary,
+  headerSpacer: {
+    width: 60,
   },
   title: {
     fontSize: 17,
     fontWeight: '600',
+  },
+  doneButtonContainer: {
+    width: 60,
+    alignItems: 'flex-end',
   },
   doneButton: {
     fontSize: 17,
     fontWeight: '600',
     color: Colors.dark.primary,
   },
-  content: {
-    flex: 1,
-    padding: 20,
+  selectionInfo: {
+    padding: 16,
+    backgroundColor: '#1a1a1a',
+    borderBottomWidth: 1,
+    borderBottomColor: '#333333',
   },
-  description: {
+  selectionInfoText: {
     fontSize: 14,
-    opacity: 0.7,
-    marginBottom: 20,
+    color: Colors.dark.icon,
+    textAlign: 'center',
   },
-  loadingContainer: {
+  pickerContainer: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
   },
-  loadingText: {
-    fontSize: 16,
-    opacity: 0.7,
+  picker: {
+    flex: 1,
   },
 });
-
