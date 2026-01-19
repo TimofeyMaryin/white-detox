@@ -1,17 +1,17 @@
 /**
  * Home Screen
  *
- * Main screen with manual app blocking and saved time display.
+ * Main screen with blocking timer and schedule card.
+ * Blocking is manual (Start/Stop) - schedule times are UI display only.
  *
  * @module app/(tabs)/index
  */
 
 import { router } from 'expo-router';
-import React, { useCallback, useState } from 'react';
+import React, { useCallback } from 'react';
 import { Alert, Platform, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { AuthorizationStatus } from 'react-native-device-activity';
 
-import { IOSActivityPicker } from '@/components/ios-activity-picker';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { TimeDial } from '@/components/time-dial';
@@ -21,22 +21,26 @@ import { Colors } from '@/constants/theme';
 import { useBlocker } from '@/contexts/blocker-context';
 import { usePremium } from '@/hooks/use-premium';
 import deviceActivityService from '@/services/device-activity.service';
-
-// Selection ID for blocked apps
-const BLOCKING_SELECTION_ID = 'main_blocking_selection';
+import { BlockerSchedule, DAY_NAMES } from '@/types/blocker';
 
 export default function HomeScreen() {
   const {
     state,
+    schedules,
     startBlocking,
     stopBlocking,
+    deleteSchedule,
     authorizationStatus,
     requestAuthorization,
   } = useBlocker();
 
   const { hasPremium } = usePremium();
-  const [showAppPicker, setShowAppPicker] = useState(false);
-  const [hasAppsSelected, setHasAppsSelected] = useState(false);
+  
+  const activeSchedule = schedules.find(
+    (s) => s.familyActivitySelectionId && s.isActive
+  );
+  
+  const hasActiveApps = Boolean(activeSchedule?.familyActivitySelectionId);
 
   // --------------------------------------------------------------------------
   // Event Handlers
@@ -49,19 +53,11 @@ export default function HomeScreen() {
     });
   }, []);
 
-  const handleSelectApps = useCallback(() => {
-    setShowAppPicker(true);
-  }, []);
-
-  const handleSelectionChange = useCallback((metadata: { applicationCount: number; categoryCount: number }) => {
-    setHasAppsSelected(metadata.applicationCount > 0 || metadata.categoryCount > 0);
-  }, []);
-
   const handleStartBlocking = useCallback(async () => {
-    if (!hasAppsSelected) {
+    if (!hasActiveApps || !activeSchedule) {
       Alert.alert(
         'No Apps Selected',
-        'Please select apps to block before starting.',
+        'Please create a blocking schedule with at least one app before starting.',
         [{ text: 'OK' }]
       );
       return;
@@ -69,7 +65,6 @@ export default function HomeScreen() {
 
     try {
       if (Platform.OS === 'ios' && deviceActivityService.isAvailable()) {
-        // Check authorization
         if (authorizationStatus !== AuthorizationStatus.approved) {
           await requestAuthorization();
 
@@ -77,33 +72,29 @@ export default function HomeScreen() {
           if (newStatus !== AuthorizationStatus.approved) {
             Alert.alert(
               'Authorization Required',
-              'Screen Time authorization is required to block apps. Please grant permission in Settings.',
+              'Screen Time authorization is required to block apps.',
               [{ text: 'OK' }]
             );
             return;
           }
         }
 
-        // Block apps
-        deviceActivityService.blockApps(BLOCKING_SELECTION_ID);
+        if (activeSchedule.familyActivitySelectionId) {
+          deviceActivityService.blockApps(activeSchedule.familyActivitySelectionId);
+        }
       }
 
-      startBlocking();
+      startBlocking(activeSchedule.id);
     } catch (error: any) {
       console.error('[HomeScreen] Error starting blocking:', error);
 
       if (__DEV__) {
-        console.warn('Continuing with blocking state only (Screen Time API not available)');
-        startBlocking();
+        startBlocking(activeSchedule.id);
       } else {
-        Alert.alert(
-          'Blocking Failed',
-          'Unable to start blocking. Please try again.',
-          [{ text: 'OK' }]
-        );
+        Alert.alert('Blocking Failed', 'Unable to start blocking.', [{ text: 'OK' }]);
       }
     }
-  }, [hasAppsSelected, authorizationStatus, requestAuthorization, startBlocking]);
+  }, [hasActiveApps, activeSchedule, authorizationStatus, requestAuthorization, startBlocking]);
 
   const handleStopBlocking = useCallback(() => {
     Alert.alert('Stop Blocking', 'Do you want to stop blocking apps?', [
@@ -125,6 +116,31 @@ export default function HomeScreen() {
     ]);
   }, [stopBlocking]);
 
+  const handleDeleteSchedule = useCallback(
+    (schedule: BlockerSchedule) => {
+      Alert.alert('Delete Schedule', `Are you sure you want to delete "${schedule.name}"?`, [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: () => deleteSchedule(schedule.id),
+        },
+      ]);
+    },
+    [deleteSchedule]
+  );
+
+  // --------------------------------------------------------------------------
+  // Render Helpers
+  // --------------------------------------------------------------------------
+
+  const getAppCount = (schedule: BlockerSchedule): string | null => {
+    if (schedule.familyActivitySelectionId) {
+      return 'Apps selected';
+    }
+    return null;
+  };
+
   // --------------------------------------------------------------------------
   // Render
   // --------------------------------------------------------------------------
@@ -137,73 +153,105 @@ export default function HomeScreen() {
         {/* Timer Display */}
         <TimeDial savedTime={state.savedTime} />
 
-        {/* App Selection Section */}
-        <View style={styles.section}>
-          <ThemedText type="subtitle" style={styles.sectionTitle}>Apps to Block</ThemedText>
-          
-          <TouchableOpacity
-            style={styles.selectAppsButton}
-            onPress={handleSelectApps}
-          >
-            <IconSymbol 
-              name={hasAppsSelected ? "checkmark.circle.fill" : "plus.circle.fill"} 
-              size={24} 
-              color={hasAppsSelected ? Colors.dark.primary : Colors.dark.icon} 
-            />
-            <ThemedText style={[
-              styles.selectAppsText,
-              hasAppsSelected && styles.selectAppsTextActive
-            ]}>
-              {hasAppsSelected ? 'Apps selected — tap to change' : 'Select apps to block'}
-            </ThemedText>
-            <IconSymbol name="chevron.right" size={20} color={Colors.dark.icon} />
-          </TouchableOpacity>
-        </View>
-
-        {/* Control Buttons */}
-        <View style={styles.controls}>
-          {state.isBlocking ? (
+        {/* Stop Button (when blocking) */}
+        {state.isBlocking && (
+          <View style={styles.controls}>
             <TouchableOpacity
               style={[styles.button, styles.stopButton]}
               onPress={handleStopBlocking}
             >
               <IconSymbol name="stop.fill" size={24} color="#000" />
-              <ThemedText style={styles.buttonText}>Stop Blocking</ThemedText>
+              <ThemedText style={styles.buttonText}>Stop</ThemedText>
             </TouchableOpacity>
-          ) : (
-            <TouchableOpacity
-              style={[
-                styles.button, 
-                styles.startButton,
-                !hasAppsSelected && styles.buttonDisabled
-              ]}
-              onPress={handleStartBlocking}
-              disabled={!hasAppsSelected}
-            >
-              <IconSymbol name="play.fill" size={24} color="#000" />
-              <ThemedText style={styles.buttonText}>Start Blocking</ThemedText>
-            </TouchableOpacity>
-          )}
-        </View>
-
-        {/* Status */}
-        {state.isBlocking && (
-          <View style={styles.statusContainer}>
-            <View style={styles.statusBadge}>
-              <View style={styles.statusDot} />
-              <ThemedText style={styles.statusText}>Blocking active</ThemedText>
-            </View>
           </View>
         )}
-      </ScrollView>
 
-      {/* App Picker Modal */}
-      <IOSActivityPicker
-        visible={showAppPicker}
-        onClose={() => setShowAppPicker(false)}
-        onSelectionChange={handleSelectionChange}
-        familyActivitySelectionId={BLOCKING_SELECTION_ID}
-      />
+        {/* Schedule Section */}
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <ThemedText type="subtitle">Blocking Schedule</ThemedText>
+            {schedules.length === 0 ? (
+              <TouchableOpacity
+                style={styles.addButton}
+                onPress={() => router.push('/modal?type=schedule')}
+              >
+                <IconSymbol name="plus.circle.fill" size={24} color={Colors.dark.primary} />
+              </TouchableOpacity>
+            ) : (
+              <TouchableOpacity
+                style={styles.addButton}
+                onPress={() => router.push(`/modal?type=schedule&scheduleId=${schedules[0].id}`)}
+              >
+                <IconSymbol name="pencil.circle.fill" size={24} color={Colors.dark.primary} />
+              </TouchableOpacity>
+            )}
+          </View>
+
+          <ThemedText style={styles.sectionDescription}>
+            Create a schedule to block specific apps
+          </ThemedText>
+
+          {schedules.length > 0 ? (
+            schedules.slice(0, 1).map((schedule) => {
+              const appCount = getAppCount(schedule);
+              const hasApps = Boolean(schedule.familyActivitySelectionId);
+
+              return (
+                <View key={schedule.id} style={styles.scheduleCard}>
+                  <TouchableOpacity
+                    style={styles.scheduleItem}
+                    onPress={() => router.push(`/modal?type=schedule&scheduleId=${schedule.id}`)}
+                  >
+                    <View style={styles.scheduleItemContent}>
+                      <ThemedText style={styles.scheduleName}>{schedule.name}</ThemedText>
+                      <ThemedText style={styles.scheduleTime}>
+                        {schedule.startTime} - {schedule.endTime}
+                      </ThemedText>
+                      {schedule.daysOfWeek.length > 0 && (
+                        <ThemedText style={styles.scheduleDays}>
+                          {schedule.daysOfWeek.map((d) => DAY_NAMES[d]).join(', ')}
+                        </ThemedText>
+                      )}
+                      {appCount ? (
+                        <ThemedText style={styles.scheduleApps}>{appCount}</ThemedText>
+                      ) : (
+                        <ThemedText style={styles.scheduleAppsWarning}>
+                          No apps selected
+                        </ThemedText>
+                      )}
+                    </View>
+
+                    <TouchableOpacity
+                      onPress={(e) => {
+                        e.stopPropagation();
+                        handleDeleteSchedule(schedule);
+                      }}
+                    >
+                      <IconSymbol name="trash.fill" size={20} color="#FF3B30" />
+                    </TouchableOpacity>
+                  </TouchableOpacity>
+
+                  {/* Start Button */}
+                  {!state.isBlocking && (
+                    <TouchableOpacity
+                      style={[styles.playButton, !hasApps && styles.playButtonDisabled]}
+                      onPress={handleStartBlocking}
+                      disabled={!hasApps}
+                    >
+                      <IconSymbol name="play.fill" size={20} color="#000" />
+                      <ThemedText style={styles.playButtonText}>Start Blocking</ThemedText>
+                    </TouchableOpacity>
+                  )}
+                </View>
+              );
+            })
+          ) : (
+            <ThemedText style={styles.emptyState}>
+              No schedule created yet. Tap + to create one.
+            </ThemedText>
+          )}
+        </View>
+      </ScrollView>
     </ThemedView>
   );
 }
@@ -224,79 +272,110 @@ const styles = StyleSheet.create({
     padding: 20,
     paddingTop: 10,
   },
-  section: {
-    marginTop: 20,
-  },
-  sectionTitle: {
-    marginBottom: 12,
-  },
-  selectAppsButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#1a1a1a',
-    padding: 16,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#333333',
-    gap: 12,
-  },
-  selectAppsText: {
-    flex: 1,
-    fontSize: 16,
-    opacity: 0.7,
-  },
-  selectAppsTextActive: {
-    opacity: 1,
-    color: Colors.dark.primary,
-  },
   controls: {
-    marginTop: 40,
+    gap: 12,
+    marginVertical: 30,
   },
   button: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 18,
+    paddingVertical: 16,
     paddingHorizontal: 24,
-    borderRadius: 16,
-    gap: 10,
-  },
-  startButton: {
-    backgroundColor: Colors.dark.primary,
+    borderRadius: 12,
+    gap: 8,
   },
   stopButton: {
     backgroundColor: '#FF3B30',
-  },
-  buttonDisabled: {
-    opacity: 0.5,
   },
   buttonText: {
     fontSize: 18,
     fontWeight: '600',
     color: '#000',
   },
-  statusContainer: {
+  section: {
+    marginTop: 30,
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
+    marginBottom: 8,
+  },
+  sectionDescription: {
+    fontSize: 14,
+    opacity: 0.7,
+  },
+  addButton: {
+    padding: 4,
+  },
+  scheduleCard: {
+    backgroundColor: '#1a1a1a',
+    borderRadius: 12,
+    marginTop: 12,
+    borderWidth: 1,
+    borderColor: '#333333',
+    overflow: 'hidden',
+  },
+  scheduleItem: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 12,
+  },
+  scheduleItemContent: {
+    flex: 1,
+  },
+  scheduleName: {
+    fontSize: 16,
+    fontWeight: '600',
+    marginBottom: 4,
+  },
+  scheduleTime: {
+    fontSize: 14,
+    opacity: 0.7,
+    marginBottom: 2,
+  },
+  scheduleDays: {
+    fontSize: 12,
+    opacity: 0.6,
+    marginTop: 4,
+  },
+  scheduleApps: {
+    fontSize: 12,
+    opacity: 0.6,
+    marginTop: 2,
+    color: Colors.dark.primary,
+  },
+  scheduleAppsWarning: {
+    fontSize: 12,
+    opacity: 0.6,
+    marginTop: 2,
+    color: '#FF3B30',
+  },
+  emptyState: {
+    fontSize: 14,
+    opacity: 0.7,
+    fontStyle: 'italic',
+    textAlign: 'center',
     marginTop: 20,
   },
-  statusBadge: {
+  playButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-    backgroundColor: 'rgba(0, 235, 63, 0.15)',
-    borderRadius: 20,
-  },
-  statusDot: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
+    justifyContent: 'center',
     backgroundColor: Colors.dark.primary,
+    paddingVertical: 12,
+    gap: 8,
+    borderTopWidth: 1,
+    borderTopColor: '#333333',
   },
-  statusText: {
-    fontSize: 14,
+  playButtonDisabled: {
+    opacity: 0.5,
+  },
+  playButtonText: {
+    fontSize: 16,
     fontWeight: '600',
-    color: Colors.dark.primary,
+    color: '#000',
   },
 });

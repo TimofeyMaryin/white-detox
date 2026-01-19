@@ -2,7 +2,7 @@
  * Blocker Context
  *
  * Global state management for app blocking functionality.
- * Manages blocking state and timer without scheduling.
+ * Schedules are UI-only - blocking is manual (Start/Stop).
  *
  * @module contexts/blocker-context
  */
@@ -19,7 +19,7 @@ import React, {
 import { AppState, AppStateStatus, Platform } from 'react-native';
 import { AuthorizationStatus, AuthorizationStatusType } from 'react-native-device-activity';
 
-import { BlockerState } from '@/types/blocker';
+import { BlockerState, BlockerSchedule } from '@/types/blocker';
 import deviceActivityService from '@/services/device-activity.service';
 import storageService from '@/services/storage.service';
 
@@ -28,27 +28,22 @@ import storageService from '@/services/storage.service';
 // ============================================================================
 
 interface BlockerContextType {
-  /** Current blocking state */
   state: BlockerState;
-  /** Whether initial data is loading */
+  schedules: BlockerSchedule[];
   isLoading: boolean;
-  /** Screen Time authorization status */
   authorizationStatus: AuthorizationStatusType;
-  /** Request Screen Time authorization */
   requestAuthorization: () => Promise<void>;
-  /** Start blocking apps */
-  startBlocking: () => Promise<void>;
-  /** Stop blocking and save accumulated time */
+  startBlocking: (scheduleId?: string) => Promise<void>;
   stopBlocking: () => Promise<void>;
+  addSchedule: (schedule: BlockerSchedule) => Promise<void>;
+  updateSchedule: (id: string, updates: Partial<BlockerSchedule>) => Promise<void>;
+  deleteSchedule: (id: string) => Promise<void>;
 }
 
 // ============================================================================
 // Helpers
 // ============================================================================
 
-/**
- * Calculate total elapsed time since blocking started
- */
 function calculateElapsedTime(startedAt: number | undefined, accumulatedTime = 0): number {
   if (!startedAt) return accumulatedTime;
   const now = Date.now();
@@ -56,9 +51,6 @@ function calculateElapsedTime(startedAt: number | undefined, accumulatedTime = 0
   return accumulatedTime + elapsed;
 }
 
-/**
- * Create default blocker state
- */
 function createDefaultState(): BlockerState {
   return {
     isBlocking: false,
@@ -77,12 +69,9 @@ const BlockerContext = createContext<BlockerContextType | null>(null);
 // Provider
 // ============================================================================
 
-interface BlockerProviderProps {
-  children: ReactNode;
-}
-
-export function BlockerProvider({ children }: BlockerProviderProps) {
+export function BlockerProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<BlockerState>(createDefaultState());
+  const [schedules, setSchedules] = useState<BlockerSchedule[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [authorizationStatus, setAuthorizationStatus] = useState<AuthorizationStatusType>(
     AuthorizationStatus.notDetermined
@@ -95,14 +84,13 @@ export function BlockerProvider({ children }: BlockerProviderProps) {
   // --------------------------------------------------------------------------
 
   useEffect(() => {
-    loadState();
+    loadData();
 
     if (Platform.OS === 'ios') {
       setAuthorizationStatus(deviceActivityService.getAuthorizationStatus());
     }
   }, []);
 
-  // Listen for authorization status changes
   useEffect(() => {
     if (Platform.OS !== 'ios') return;
 
@@ -119,7 +107,6 @@ export function BlockerProvider({ children }: BlockerProviderProps) {
 
   useEffect(() => {
     const handleAppStateChange = (nextAppState: AppStateStatus) => {
-      // When app comes to foreground, recalculate elapsed time
       if (appStateRef.current.match(/inactive|background/) && nextAppState === 'active') {
         setState((prev) => {
           if (prev.isBlocking && !prev.isPaused && prev.startedAt) {
@@ -161,12 +148,11 @@ export function BlockerProvider({ children }: BlockerProviderProps) {
   // Data Loading
   // --------------------------------------------------------------------------
 
-  const loadState = async () => {
+  const loadData = async () => {
     try {
-      const savedState = await storageService.getBlockerState();
+      const { state: savedState, schedules: savedSchedules } = await storageService.loadAll();
 
       if (savedState) {
-        // Recalculate elapsed time if blocking was active
         if (savedState.isBlocking && !savedState.isPaused && savedState.startedAt) {
           savedState.savedTime = calculateElapsedTime(
             savedState.startedAt,
@@ -175,8 +161,10 @@ export function BlockerProvider({ children }: BlockerProviderProps) {
         }
         setState(savedState);
       }
+
+      setSchedules(savedSchedules);
     } catch (error) {
-      console.error('[BlockerContext] Error loading state:', error);
+      console.error('[BlockerContext] Error loading data:', error);
     } finally {
       setIsLoading(false);
     }
@@ -197,21 +185,33 @@ export function BlockerProvider({ children }: BlockerProviderProps) {
   // Blocking Controls
   // --------------------------------------------------------------------------
 
-  const startBlocking = useCallback(async () => {
-    const now = Date.now();
+  const startBlocking = useCallback(
+    async (scheduleId?: string) => {
+      const now = Date.now();
 
-    const newState: BlockerState = {
-      ...state,
-      isBlocking: true,
-      isPaused: false,
-      startedAt: now,
-      accumulatedTime: state.savedTime,
-      savedTime: state.savedTime,
-    };
+      const newState: BlockerState = {
+        ...state,
+        isBlocking: true,
+        isPaused: false,
+        startedAt: now,
+        currentScheduleId: scheduleId,
+        accumulatedTime: state.savedTime,
+        savedTime: state.savedTime,
+      };
 
-    setState(newState);
-    await storageService.saveBlockerState(newState);
-  }, [state]);
+      setState(newState);
+      await storageService.saveBlockerState(newState);
+
+      // Block apps if schedule has selection
+      if (Platform.OS === 'ios' && scheduleId) {
+        const schedule = schedules.find((s) => s.id === scheduleId);
+        if (schedule?.familyActivitySelectionId) {
+          deviceActivityService.blockApps(schedule.familyActivitySelectionId);
+        }
+      }
+    },
+    [state, schedules]
+  );
 
   const stopBlocking = useCallback(async () => {
     const finalSavedTime = state.startedAt
@@ -223,6 +223,7 @@ export function BlockerProvider({ children }: BlockerProviderProps) {
       isBlocking: false,
       isPaused: false,
       startedAt: undefined,
+      currentScheduleId: undefined,
       accumulatedTime: finalSavedTime,
       savedTime: finalSavedTime,
     };
@@ -230,11 +231,70 @@ export function BlockerProvider({ children }: BlockerProviderProps) {
     setState(newState);
     await storageService.saveBlockerState(newState);
 
-    // Remove all blocks
     if (Platform.OS === 'ios') {
       deviceActivityService.unblockAllApps();
     }
   }, [state]);
+
+  // --------------------------------------------------------------------------
+  // Schedule Management (UI only - no automatic scheduling)
+  // --------------------------------------------------------------------------
+
+  const addSchedule = useCallback(
+    async (schedule: BlockerSchedule) => {
+      const newSchedules = [...schedules, schedule];
+      await storageService.saveSchedules(newSchedules);
+      setSchedules(newSchedules);
+    },
+    [schedules]
+  );
+
+  const updateSchedule = useCallback(
+    async (id: string, updates: Partial<BlockerSchedule>) => {
+      const existingSchedule = schedules.find((s) => s.id === id);
+      if (!existingSchedule) return;
+
+      const updatedSchedule = { ...existingSchedule, ...updates };
+      const newSchedules = schedules.map((s) => (s.id === id ? updatedSchedule : s));
+
+      await storageService.saveSchedules(newSchedules);
+      setSchedules(newSchedules);
+    },
+    [schedules]
+  );
+
+  const deleteSchedule = useCallback(
+    async (id: string) => {
+      // Stop blocking if active
+      if (state.isBlocking) {
+        const finalSavedTime = state.startedAt
+          ? calculateElapsedTime(state.startedAt, state.accumulatedTime)
+          : state.savedTime;
+
+        const newState: BlockerState = {
+          ...state,
+          isBlocking: false,
+          isPaused: false,
+          startedAt: undefined,
+          currentScheduleId: undefined,
+          accumulatedTime: finalSavedTime,
+          savedTime: finalSavedTime,
+        };
+
+        setState(newState);
+        await storageService.saveBlockerState(newState);
+
+        if (Platform.OS === 'ios') {
+          deviceActivityService.unblockAllApps();
+        }
+      }
+
+      const newSchedules = schedules.filter((s) => s.id !== id);
+      await storageService.saveSchedules(newSchedules);
+      setSchedules(newSchedules);
+    },
+    [schedules, state]
+  );
 
   // --------------------------------------------------------------------------
   // Render
@@ -244,11 +304,15 @@ export function BlockerProvider({ children }: BlockerProviderProps) {
     <BlockerContext.Provider
       value={{
         state,
+        schedules,
         isLoading,
         authorizationStatus,
         requestAuthorization,
         startBlocking,
         stopBlocking,
+        addSchedule,
+        updateSchedule,
+        deleteSchedule,
       }}
     >
       {children}
@@ -260,12 +324,6 @@ export function BlockerProvider({ children }: BlockerProviderProps) {
 // Hook
 // ============================================================================
 
-/**
- * Hook to access blocker context
- *
- * @returns Blocker context with state and actions
- * @throws Error if used outside BlockerProvider
- */
 export function useBlocker(): BlockerContextType {
   const context = useContext(BlockerContext);
 
