@@ -58,8 +58,14 @@ export interface BlockerState {
   /** Time accumulated before current session */
   accumulatedTime?: number;
 
-  /** Current active schedule ID */
+  /** Current active schedule ID (legacy, for backwards compatibility) */
   currentScheduleId?: string;
+
+  /** Active schedule IDs (currently blocking) */
+  activeScheduleIds?: string[];
+
+  /** Waiting schedule IDs (waiting for start time) */
+  waitingScheduleIds?: string[];
 
   /** Whether blocking was started automatically by schedule */
   isAutomatic?: boolean;

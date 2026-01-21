@@ -231,12 +231,9 @@ export function ScheduleForm({ schedule, onSave, onCancel }: ScheduleFormProps) 
               <SelectedAppsIcons
                 familyActivitySelectionId={scheduleId}
                 iconSize={40}
-                maxIcons={6}
+                maxIcons={8}
                 height={48}
               />
-              <ThemedText style={styles.selectedInfoText}>
-                {selectionInfo.applicationCount} apps, {selectionInfo.categoryCount} categories
-              </ThemedText>
             </View>
           ) : (
             <ThemedText style={styles.emptyText}>
@@ -450,18 +447,11 @@ const styles = StyleSheet.create({
     color: Colors.dark.primary,
   },
   selectedInfo: {
-    flexDirection: 'column',
-    gap: 8,
     padding: 12,
     backgroundColor: 'rgba(0, 235, 63, 0.1)',
     borderRadius: 8,
     borderWidth: 1,
     borderColor: 'rgba(0, 235, 63, 0.3)',
-  },
-  selectedInfoText: {
-    textAlign: 'center',
-    fontSize: 14,
-    color: Colors.dark.primary,
   },
   emptyText: {
     fontSize: 14,

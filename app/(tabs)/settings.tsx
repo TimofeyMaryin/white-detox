@@ -18,23 +18,6 @@ function getStoreReviewModule() {
   }
 }
 
-// Function to get notifications module safely - only called when needed
-function getNotificationsModule() {
-  try {
-    // Try to require the module - if it's linked, it will work
-    const Notifications = require('expo-notifications');
-    
-    // Check if the module has the required methods
-    if (Notifications && typeof Notifications.scheduleNotificationAsync === 'function') {
-      return Notifications;
-    }
-    return null;
-  } catch (error: any) {
-    // Silently fail if module is not available
-    // This is expected if native module is not built yet
-    return null;
-  }
-}
 
 export default function SettingsScreen() {
   const router = useRouter();
@@ -99,113 +82,6 @@ export default function SettingsScreen() {
         'Thank you for using Dopamine Detox! Your feedback helps us improve.',
         [{ text: 'OK' }]
       );
-    }
-  };
-
-  const handleTestNotification = async () => {
-    console.log('handleTestNotification called');
-    
-    try {
-      console.log('Getting notifications module...');
-      const Notifications = getNotificationsModule();
-      console.log('Notifications module:', Notifications ? 'found' : 'not found');
-
-      if (!Notifications) {
-        console.log('Notifications module not available - showing alert');
-        Alert.alert(
-          'Notifications Not Available',
-          'Please rebuild the app with expo-notifications plugin to enable notifications. Run: npx expo prebuild --clean'
-        );
-        return;
-      }
-
-      console.log('Checking permissions...');
-      // Request permissions first if not granted
-      let permissions;
-      try {
-        permissions = await Notifications.getPermissionsAsync();
-        console.log('Existing permissions:', permissions);
-      } catch (permError: any) {
-        console.error('Error getting permissions:', permError);
-        Alert.alert(
-          'Error',
-          `Failed to check permissions: ${permError?.message || 'Unknown error'}`
-        );
-        return;
-      }
-      
-      let finalStatus = permissions.status;
-      
-      if (!permissions.granted) {
-        console.log('Requesting permissions...');
-        try {
-          const requestResult = await Notifications.requestPermissionsAsync();
-          console.log('Permission request result:', requestResult);
-          finalStatus = requestResult.status;
-        } catch (reqError: any) {
-          console.error('Error requesting permissions:', reqError);
-          Alert.alert(
-            'Error',
-            `Failed to request permissions: ${reqError?.message || 'Unknown error'}`
-          );
-          return;
-        }
-      }
-
-      console.log('Final status:', finalStatus);
-
-      if (finalStatus !== 'granted') {
-        console.log('Permissions not granted - showing alert');
-        Alert.alert(
-          'Permission Required',
-          'Please enable notifications in Settings to test notifications.'
-        );
-        return;
-      }
-
-      console.log('Scheduling notification...');
-      if (typeof Notifications.scheduleNotificationAsync === 'function') {
-        try {
-          const notificationId = await Notifications.scheduleNotificationAsync({
-            content: {
-              title: 'Test Notification',
-              body: 'This is a test notification from Dopamine Detox',
-              sound: true,
-            },
-            trigger: null, // null means show immediately
-          });
-          console.log('Notification scheduled with ID:', notificationId);
-          // Don't show Alert - the notification itself will appear
-        } catch (scheduleError: any) {
-          console.error('Error scheduling notification:', scheduleError);
-          Alert.alert(
-            'Error',
-            `Failed to schedule notification: ${scheduleError?.message || 'Unknown error'}`
-          );
-        }
-      } else {
-        console.log('scheduleNotificationAsync not available');
-        Alert.alert(
-          'Notifications Not Available',
-          'Notification module is not properly configured. Please rebuild the app.'
-        );
-      }
-    } catch (error: any) {
-      console.error('Error in handleTestNotification:', error);
-      console.error('Error stack:', error?.stack);
-      // Check if it's a native module error
-      if (error?.message?.includes('ExpoPushTokenManager') || 
-          error?.message?.includes('Cannot find native module')) {
-        Alert.alert(
-          'Notifications Not Available',
-          'Please rebuild the app with expo-notifications plugin to enable notifications.'
-        );
-      } else {
-        Alert.alert(
-          'Error',
-          `Failed to send test notification: ${error?.message || 'Unknown error'}. Please rebuild the app.`
-        );
-      }
     }
   };
 
@@ -380,18 +256,6 @@ export default function SettingsScreen() {
             <IconSymbol name="chevron.right" size={20} color={Colors.dark.icon} />
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.settingRow} onPress={handleTestNotification}>
-            <View style={styles.settingLeft}>
-              <IconSymbol name="bell.badge.fill" size={24} color={Colors.dark.primary} />
-              <View style={styles.settingInfo}>
-                <ThemedText style={styles.settingLabel}>Test Notification</ThemedText>
-                <ThemedText style={styles.settingDescription}>
-                  Send a test notification to verify settings
-                </ThemedText>
-              </View>
-            </View>
-            <IconSymbol name="chevron.right" size={20} color={Colors.dark.icon} />
-          </TouchableOpacity>
         </View>
 
         {/* Data */}
