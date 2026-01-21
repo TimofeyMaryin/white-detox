@@ -2,7 +2,8 @@
  * Blocker Context
  *
  * Global state management for app blocking functionality.
- * Schedules are UI-only - blocking is manual (Start/Stop).
+ * Schedules are checked while app is active (foreground mode).
+ * Automatic blocking starts/stops based on current time and day.
  *
  * @module contexts/blocker-context
  */
@@ -57,6 +58,51 @@ function createDefaultState(): BlockerState {
     isPaused: false,
     savedTime: 0,
   };
+}
+
+/**
+ * Parse time string "HH:mm" to minutes since midnight
+ */
+function timeToMinutes(time: string): number {
+  const [hours, minutes] = time.split(':').map(Number);
+  return hours * 60 + minutes;
+}
+
+/**
+ * Check if current time falls within schedule's time range
+ * Handles overnight schedules (e.g., 22:00 - 06:00)
+ */
+function isTimeInRange(startTime: string, endTime: string): boolean {
+  const now = new Date();
+  const currentMinutes = now.getHours() * 60 + now.getMinutes();
+  const startMinutes = timeToMinutes(startTime);
+  const endMinutes = timeToMinutes(endTime);
+
+  // Handle overnight schedule (e.g., 22:00 - 06:00)
+  if (startMinutes > endMinutes) {
+    return currentMinutes >= startMinutes || currentMinutes < endMinutes;
+  }
+
+  // Normal schedule (e.g., 09:00 - 17:00)
+  return currentMinutes >= startMinutes && currentMinutes < endMinutes;
+}
+
+/**
+ * Check if a schedule should be active right now
+ */
+function isScheduleActiveNow(schedule: BlockerSchedule): boolean {
+  if (!schedule.isActive || !schedule.familyActivitySelectionId) {
+    return false;
+  }
+
+  // Check if today is in the schedule's days
+  const today = new Date().getDay(); // 0 = Sunday, 1 = Monday, etc.
+  if (!schedule.daysOfWeek.includes(today)) {
+    return false;
+  }
+
+  // Check if current time is within the schedule's time range
+  return isTimeInRange(schedule.startTime, schedule.endTime);
 }
 
 // ============================================================================
@@ -145,6 +191,96 @@ export function BlockerProvider({ children }: { children: ReactNode }) {
   }, [state.isBlocking, state.isPaused]);
 
   // --------------------------------------------------------------------------
+  // Automatic Schedule Checking (while app is active)
+  // --------------------------------------------------------------------------
+
+  const checkSchedulesRef = useRef<() => void>();
+
+  useEffect(() => {
+    checkSchedulesRef.current = async () => {
+      if (isLoading || Platform.OS !== 'ios') return;
+
+      // Find first active schedule that should be running now
+      const activeSchedule = schedules.find(isScheduleActiveNow);
+
+      if (activeSchedule) {
+        // Should be blocking - start if not already
+        if (!state.isBlocking) {
+          console.log('[BlockerContext] Auto-starting blocking for schedule:', activeSchedule.id);
+          const now = Date.now();
+          const newState: BlockerState = {
+            ...state,
+            isBlocking: true,
+            isPaused: false,
+            startedAt: now,
+            currentScheduleId: activeSchedule.id,
+            accumulatedTime: state.savedTime,
+            savedTime: state.savedTime,
+            isAutomatic: true,
+          };
+          setState(newState);
+          await storageService.saveBlockerState(newState);
+          
+          if (activeSchedule.familyActivitySelectionId) {
+            deviceActivityService.blockApps(activeSchedule.familyActivitySelectionId);
+          }
+        }
+      } else {
+        // No schedule active - stop if was automatic
+        if (state.isBlocking && state.isAutomatic) {
+          console.log('[BlockerContext] Auto-stopping blocking (schedule ended)');
+          const finalSavedTime = state.startedAt
+            ? calculateElapsedTime(state.startedAt, state.accumulatedTime)
+            : state.savedTime;
+
+          const newState: BlockerState = {
+            ...state,
+            isBlocking: false,
+            isPaused: false,
+            startedAt: undefined,
+            currentScheduleId: undefined,
+            accumulatedTime: finalSavedTime,
+            savedTime: finalSavedTime,
+            isAutomatic: false,
+          };
+          setState(newState);
+          await storageService.saveBlockerState(newState);
+          deviceActivityService.unblockAllApps();
+        }
+      }
+    };
+  }, [state, schedules, isLoading]);
+
+  // Check schedules every 30 seconds while app is active
+  useEffect(() => {
+    if (isLoading) return;
+
+    // Initial check
+    checkSchedulesRef.current?.();
+
+    const interval = setInterval(() => {
+      checkSchedulesRef.current?.();
+    }, 30000); // Check every 30 seconds
+
+    return () => clearInterval(interval);
+  }, [isLoading]);
+
+  // Also check when app becomes active
+  useEffect(() => {
+    const handleAppStateChange = (nextAppState: AppStateStatus) => {
+      if (appStateRef.current.match(/inactive|background/) && nextAppState === 'active') {
+        // App became active - check schedules
+        setTimeout(() => {
+          checkSchedulesRef.current?.();
+        }, 500);
+      }
+    };
+
+    const subscription = AppState.addEventListener('change', handleAppStateChange);
+    return () => subscription.remove();
+  }, []);
+
+  // --------------------------------------------------------------------------
   // Data Loading
   // --------------------------------------------------------------------------
 
@@ -197,6 +333,7 @@ export function BlockerProvider({ children }: { children: ReactNode }) {
         currentScheduleId: scheduleId,
         accumulatedTime: state.savedTime,
         savedTime: state.savedTime,
+        isAutomatic: false, // Manual start
       };
 
       setState(newState);
@@ -226,6 +363,7 @@ export function BlockerProvider({ children }: { children: ReactNode }) {
       currentScheduleId: undefined,
       accumulatedTime: finalSavedTime,
       savedTime: finalSavedTime,
+      isAutomatic: false,
     };
 
     setState(newState);
@@ -265,8 +403,8 @@ export function BlockerProvider({ children }: { children: ReactNode }) {
 
   const deleteSchedule = useCallback(
     async (id: string) => {
-      // Stop blocking if active
-      if (state.isBlocking) {
+      // Stop blocking if this schedule is active
+      if (state.isBlocking && state.currentScheduleId === id) {
         const finalSavedTime = state.startedAt
           ? calculateElapsedTime(state.startedAt, state.accumulatedTime)
           : state.savedTime;
@@ -279,6 +417,7 @@ export function BlockerProvider({ children }: { children: ReactNode }) {
           currentScheduleId: undefined,
           accumulatedTime: finalSavedTime,
           savedTime: finalSavedTime,
+          isAutomatic: false,
         };
 
         setState(newState);

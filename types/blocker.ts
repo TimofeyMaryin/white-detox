@@ -7,7 +7,8 @@
  */
 
 /**
- * Blocking schedule configuration (UI only - no automatic scheduling)
+ * Blocking schedule configuration
+ * Schedule checks happen while app is active (foreground)
  */
 export interface BlockerSchedule {
   /** Unique identifier for the schedule */
@@ -16,14 +17,14 @@ export interface BlockerSchedule {
   /** User-friendly name for the schedule */
   name: string;
 
-  /** Start time in HH:mm format (UI display only) */
+  /** Start time in HH:mm format */
   startTime: string;
 
-  /** End time in HH:mm format (UI display only) */
+  /** End time in HH:mm format */
   endTime: string;
 
   /**
-   * Days of week (UI display only)
+   * Days of week when schedule is active
    * 0 = Sunday, 1 = Monday, ..., 6 = Saturday
    */
   daysOfWeek: number[];
@@ -59,6 +60,9 @@ export interface BlockerState {
 
   /** Current active schedule ID */
   currentScheduleId?: string;
+
+  /** Whether blocking was started automatically by schedule */
+  isAutomatic?: boolean;
 }
 
 /** Day names for display */

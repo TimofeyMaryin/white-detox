@@ -14,7 +14,6 @@ import {
   Platform,
   ScrollView,
   StyleSheet,
-  TextInput,
   TouchableOpacity,
   View,
 } from 'react-native';
@@ -23,6 +22,7 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import { Colors } from '@/constants/theme';
 import { BlockerSchedule, DAY_NAMES_FULL } from '@/types/blocker';
 import { IOSActivityPicker } from './ios-activity-picker';
+import { SelectedAppsIcons } from './selected-apps-icons';
 import { ThemedText } from './themed-text';
 import { ThemedView } from './themed-view';
 import { IconSymbol } from './ui/icon-symbol';
@@ -47,17 +47,19 @@ function dateToTimeString(date: Date): string {
 }
 
 export function ScheduleForm({ schedule, onSave, onCancel }: ScheduleFormProps) {
-  const [name, setName] = useState(schedule?.name || '');
   const [startTime, setStartTime] = useState(schedule?.startTime || '09:00');
   const [endTime, setEndTime] = useState(schedule?.endTime || '17:00');
   const [selectedDays, setSelectedDays] = useState<number[]>(schedule?.daysOfWeek || []);
   const [isActive] = useState(schedule?.isActive ?? true);
   const [showPicker, setShowPicker] = useState(false);
   
+  // If editing, mark as having apps selected (since we can't query the native selection)
+  const isEditing = Boolean(schedule?.familyActivitySelectionId);
   const [selectionInfo, setSelectionInfo] = useState({
-    applicationCount: 0,
+    applicationCount: isEditing ? 1 : 0, // Assume apps are selected if editing
     categoryCount: 0,
   });
+  const [hasModifiedSelection, setHasModifiedSelection] = useState(false);
   
   const [scheduleId] = useState(() => schedule?.id || `schedule_${Date.now()}`);
   
@@ -116,15 +118,15 @@ export function ScheduleForm({ schedule, onSave, onCancel }: ScheduleFormProps) 
 
   const handleSelectionChange = (metadata: { applicationCount: number; categoryCount: number }) => {
     setSelectionInfo(metadata);
+    setHasModifiedSelection(true);
   };
 
-  const hasAppsSelected = selectionInfo.applicationCount > 0 || selectionInfo.categoryCount > 0;
+  // For editing: if selection wasn't modified, trust that apps exist; otherwise check new selection
+  const hasAppsSelected = isEditing && !hasModifiedSelection 
+    ? true 
+    : selectionInfo.applicationCount > 0 || selectionInfo.categoryCount > 0;
 
   const handleSave = () => {
-    if (!name.trim()) {
-      Alert.alert('Error', 'Please enter a schedule name');
-      return;
-    }
     if (!hasAppsSelected) {
       Alert.alert('Error', 'Please select at least one app to block');
       return;
@@ -136,7 +138,7 @@ export function ScheduleForm({ schedule, onSave, onCancel }: ScheduleFormProps) 
 
     const newSchedule: BlockerSchedule = {
       id: scheduleId,
-      name: name.trim(),
+      name: '', // Not displayed, kept for compatibility
       startTime,
       endTime,
       daysOfWeek: selectedDays,
@@ -152,17 +154,6 @@ export function ScheduleForm({ schedule, onSave, onCancel }: ScheduleFormProps) 
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.content}>
         <View style={styles.header}>
           <ThemedText type="title">{schedule ? 'Edit Schedule' : 'New Schedule'}</ThemedText>
-        </View>
-
-        <View style={styles.section}>
-          <ThemedText style={styles.label}>Name</ThemedText>
-          <TextInput
-            style={styles.input}
-            value={name}
-            onChangeText={setName}
-            placeholder="Schedule name"
-            placeholderTextColor={Colors.dark.icon}
-          />
         </View>
 
         <View style={styles.section}>
@@ -237,9 +228,14 @@ export function ScheduleForm({ schedule, onSave, onCancel }: ScheduleFormProps) 
           
           {hasAppsSelected ? (
             <View style={styles.selectedInfo}>
-              <IconSymbol name="checkmark.circle.fill" size={20} color={Colors.dark.primary} />
+              <SelectedAppsIcons
+                familyActivitySelectionId={scheduleId}
+                iconSize={40}
+                maxIcons={6}
+                height={48}
+              />
               <ThemedText style={styles.selectedInfoText}>
-                {selectionInfo.applicationCount} apps, {selectionInfo.categoryCount} categories selected
+                {selectionInfo.applicationCount} apps, {selectionInfo.categoryCount} categories
               </ThemedText>
             </View>
           ) : (
@@ -257,10 +253,10 @@ export function ScheduleForm({ schedule, onSave, onCancel }: ScheduleFormProps) 
             style={[
               styles.button, 
               styles.saveButton, 
-              (!name.trim() || !hasAppsSelected || selectedDays.length === 0) && styles.saveButtonDisabled
+              (!hasAppsSelected || selectedDays.length === 0) && styles.saveButtonDisabled
             ]}
             onPress={handleSave}
-            disabled={!name.trim() || !hasAppsSelected || selectedDays.length === 0}
+            disabled={!hasAppsSelected || selectedDays.length === 0}
           >
             <ThemedText style={styles.saveButtonText}>Save</ThemedText>
           </TouchableOpacity>
@@ -375,15 +371,6 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     marginBottom: 8,
   },
-  input: {
-    backgroundColor: '#1a1a1a',
-    borderWidth: 1,
-    borderColor: '#333333',
-    borderRadius: 12,
-    padding: 16,
-    fontSize: 16,
-    color: Colors.dark.text,
-  },
   daysContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -463,8 +450,7 @@ const styles = StyleSheet.create({
     color: Colors.dark.primary,
   },
   selectedInfo: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: 'column',
     gap: 8,
     padding: 12,
     backgroundColor: 'rgba(0, 235, 63, 0.1)',
@@ -473,6 +459,7 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(0, 235, 63, 0.3)',
   },
   selectedInfoText: {
+    textAlign: 'center',
     fontSize: 14,
     color: Colors.dark.primary,
   },

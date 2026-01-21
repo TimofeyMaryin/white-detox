@@ -1,17 +1,18 @@
 /**
  * Home Screen
  *
- * Main screen with blocking timer and schedule card.
- * Blocking is manual (Start/Stop) - schedule times are UI display only.
+ * Main screen with blocking timer and schedule cards.
+ * Schedules auto-activate when app is open and time matches.
  *
  * @module app/(tabs)/index
  */
 
 import { router } from 'expo-router';
-import React, { useCallback } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { Alert, Platform, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { AuthorizationStatus } from 'react-native-device-activity';
 
+import { SelectedAppsIcons } from '@/components/selected-apps-icons';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { TimeDial } from '@/components/time-dial';
@@ -35,12 +36,6 @@ export default function HomeScreen() {
   } = useBlocker();
 
   const { hasPremium } = usePremium();
-  
-  const activeSchedule = schedules.find(
-    (s) => s.familyActivitySelectionId && s.isActive
-  );
-  
-  const hasActiveApps = Boolean(activeSchedule?.familyActivitySelectionId);
 
   // --------------------------------------------------------------------------
   // Event Handlers
@@ -52,49 +47,6 @@ export default function HomeScreen() {
       params: { placement: 'pw_main' },
     });
   }, []);
-
-  const handleStartBlocking = useCallback(async () => {
-    if (!hasActiveApps || !activeSchedule) {
-      Alert.alert(
-        'No Apps Selected',
-        'Please create a blocking schedule with at least one app before starting.',
-        [{ text: 'OK' }]
-      );
-      return;
-    }
-
-    try {
-      if (Platform.OS === 'ios' && deviceActivityService.isAvailable()) {
-        if (authorizationStatus !== AuthorizationStatus.approved) {
-          await requestAuthorization();
-
-          const newStatus = deviceActivityService.getAuthorizationStatus();
-          if (newStatus !== AuthorizationStatus.approved) {
-            Alert.alert(
-              'Authorization Required',
-              'Screen Time authorization is required to block apps.',
-              [{ text: 'OK' }]
-            );
-            return;
-          }
-        }
-
-        if (activeSchedule.familyActivitySelectionId) {
-          deviceActivityService.blockApps(activeSchedule.familyActivitySelectionId);
-        }
-      }
-
-      startBlocking(activeSchedule.id);
-    } catch (error: any) {
-      console.error('[HomeScreen] Error starting blocking:', error);
-
-      if (__DEV__) {
-        startBlocking(activeSchedule.id);
-      } else {
-        Alert.alert('Blocking Failed', 'Unable to start blocking.', [{ text: 'OK' }]);
-      }
-    }
-  }, [hasActiveApps, activeSchedule, authorizationStatus, requestAuthorization, startBlocking]);
 
   const handleStopBlocking = useCallback(() => {
     Alert.alert('Stop Blocking', 'Do you want to stop blocking apps?', [
@@ -118,7 +70,7 @@ export default function HomeScreen() {
 
   const handleDeleteSchedule = useCallback(
     (schedule: BlockerSchedule) => {
-      Alert.alert('Delete Schedule', `Are you sure you want to delete "${schedule.name}"?`, [
+      Alert.alert('Delete Schedule', 'Are you sure you want to delete this schedule?', [
         { text: 'Cancel', style: 'cancel' },
         {
           text: 'Delete',
@@ -130,16 +82,80 @@ export default function HomeScreen() {
     [deleteSchedule]
   );
 
+  const handleStartBlockingSchedule = useCallback(
+    async (schedule: BlockerSchedule) => {
+      if (!schedule.familyActivitySelectionId) {
+        Alert.alert('No Apps Selected', 'Please select apps to block first.', [{ text: 'OK' }]);
+        return;
+      }
+
+      try {
+        if (Platform.OS === 'ios' && deviceActivityService.isAvailable()) {
+          if (authorizationStatus !== AuthorizationStatus.approved) {
+            await requestAuthorization();
+            const newStatus = deviceActivityService.getAuthorizationStatus();
+            if (newStatus !== AuthorizationStatus.approved) {
+              Alert.alert('Authorization Required', 'Screen Time authorization is required.', [
+                { text: 'OK' },
+              ]);
+              return;
+            }
+          }
+          deviceActivityService.blockApps(schedule.familyActivitySelectionId);
+        }
+        startBlocking(schedule.id);
+      } catch (error) {
+        console.error('[HomeScreen] Error starting blocking:', error);
+        if (__DEV__) {
+          startBlocking(schedule.id);
+        } else {
+          Alert.alert('Blocking Failed', 'Unable to start blocking.', [{ text: 'OK' }]);
+        }
+      }
+    },
+    [authorizationStatus, requestAuthorization, startBlocking]
+  );
+
   // --------------------------------------------------------------------------
   // Render Helpers
   // --------------------------------------------------------------------------
 
-  const getAppCount = (schedule: BlockerSchedule): string | null => {
-    if (schedule.familyActivitySelectionId) {
-      return 'Apps selected';
+  /**
+   * Check if schedule should be active right now
+   */
+  const getScheduleStatus = useCallback((schedule: BlockerSchedule): 'active' | 'waiting' | 'inactive' => {
+    if (!schedule.isActive || !schedule.familyActivitySelectionId) {
+      return 'inactive';
     }
-    return null;
-  };
+
+    const now = new Date();
+    const today = now.getDay();
+    
+    // Check if today is in schedule's days
+    if (!schedule.daysOfWeek.includes(today)) {
+      return 'waiting';
+    }
+
+    // Parse times
+    const [startH, startM] = schedule.startTime.split(':').map(Number);
+    const [endH, endM] = schedule.endTime.split(':').map(Number);
+    const currentMinutes = now.getHours() * 60 + now.getMinutes();
+    const startMinutes = startH * 60 + startM;
+    const endMinutes = endH * 60 + endM;
+
+    // Handle overnight (e.g., 22:00 - 06:00)
+    if (startMinutes > endMinutes) {
+      if (currentMinutes >= startMinutes || currentMinutes < endMinutes) {
+        return 'active';
+      }
+    } else {
+      if (currentMinutes >= startMinutes && currentMinutes < endMinutes) {
+        return 'active';
+      }
+    }
+
+    return 'waiting';
+  }, []);
 
   // --------------------------------------------------------------------------
   // Render
@@ -153,67 +169,67 @@ export default function HomeScreen() {
         {/* Timer Display */}
         <TimeDial savedTime={state.savedTime} />
 
-        {/* Stop Button (when blocking) */}
-        {state.isBlocking && (
-          <View style={styles.controls}>
-            <TouchableOpacity
-              style={[styles.button, styles.stopButton]}
-              onPress={handleStopBlocking}
-            >
-              <IconSymbol name="stop.fill" size={24} color="#000" />
-              <ThemedText style={styles.buttonText}>Stop</ThemedText>
-            </TouchableOpacity>
-          </View>
-        )}
-
         {/* Schedule Section */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <ThemedText type="subtitle">Blocking Schedule</ThemedText>
-            {schedules.length === 0 ? (
-              <TouchableOpacity
-                style={styles.addButton}
-                onPress={() => router.push('/modal?type=schedule')}
-              >
-                <IconSymbol name="plus.circle.fill" size={24} color={Colors.dark.primary} />
-              </TouchableOpacity>
-            ) : (
-              <TouchableOpacity
-                style={styles.addButton}
-                onPress={() => router.push(`/modal?type=schedule&scheduleId=${schedules[0].id}`)}
-              >
-                <IconSymbol name="pencil.circle.fill" size={24} color={Colors.dark.primary} />
-              </TouchableOpacity>
-            )}
+            <ThemedText type="subtitle">Blocking Schedules</ThemedText>
+            <TouchableOpacity
+              style={styles.addButton}
+              onPress={() => router.push('/modal?type=schedule')}
+            >
+              <IconSymbol name="plus.circle.fill" size={24} color={Colors.dark.primary} />
+            </TouchableOpacity>
           </View>
 
           <ThemedText style={styles.sectionDescription}>
-            Create a schedule to block specific apps
+            Schedules auto-activate while app is open
           </ThemedText>
 
           {schedules.length > 0 ? (
-            schedules.slice(0, 1).map((schedule) => {
-              const appCount = getAppCount(schedule);
+            schedules.map((schedule) => {
               const hasApps = Boolean(schedule.familyActivitySelectionId);
+              const isCurrentlyBlocking = state.isBlocking && state.currentScheduleId === schedule.id;
+              const scheduleStatus = getScheduleStatus(schedule);
+              const isScheduleActive = scheduleStatus === 'active';
 
               return (
-                <View key={schedule.id} style={styles.scheduleCard}>
+                <View key={schedule.id} style={[
+                  styles.scheduleCard, 
+                  isCurrentlyBlocking && styles.scheduleCardActive,
+                  isScheduleActive && !isCurrentlyBlocking && styles.scheduleCardScheduled
+                ]}>
                   <TouchableOpacity
                     style={styles.scheduleItem}
                     onPress={() => router.push(`/modal?type=schedule&scheduleId=${schedule.id}`)}
                   >
                     <View style={styles.scheduleItemContent}>
-                      <ThemedText style={styles.scheduleName}>{schedule.name}</ThemedText>
-                      <ThemedText style={styles.scheduleTime}>
-                        {schedule.startTime} - {schedule.endTime}
-                      </ThemedText>
+                      <View style={styles.scheduleHeader}>
+                        <ThemedText style={styles.scheduleTime}>
+                          {schedule.startTime} - {schedule.endTime}
+                        </ThemedText>
+                        {isCurrentlyBlocking && (
+                          <View style={styles.statusBadge}>
+                            <ThemedText style={styles.statusBadgeText}>ACTIVE</ThemedText>
+                          </View>
+                        )}
+                        {isScheduleActive && !isCurrentlyBlocking && (
+                          <View style={[styles.statusBadge, styles.statusBadgeScheduled]}>
+                            <ThemedText style={styles.statusBadgeTextScheduled}>SCHEDULED</ThemedText>
+                          </View>
+                        )}
+                      </View>
                       {schedule.daysOfWeek.length > 0 && (
                         <ThemedText style={styles.scheduleDays}>
                           {schedule.daysOfWeek.map((d) => DAY_NAMES[d]).join(', ')}
                         </ThemedText>
                       )}
-                      {appCount ? (
-                        <ThemedText style={styles.scheduleApps}>{appCount}</ThemedText>
+                      {hasApps ? (
+                        <SelectedAppsIcons
+                          familyActivitySelectionId={schedule.familyActivitySelectionId}
+                          iconSize={36}
+                          maxIcons={5}
+                          height={44}
+                        />
                       ) : (
                         <ThemedText style={styles.scheduleAppsWarning}>
                           No apps selected
@@ -231,15 +247,25 @@ export default function HomeScreen() {
                     </TouchableOpacity>
                   </TouchableOpacity>
 
-                  {/* Start Button */}
-                  {!state.isBlocking && (
+                  {/* Start/Stop Button */}
+                  {isCurrentlyBlocking ? (
                     <TouchableOpacity
-                      style={[styles.playButton, !hasApps && styles.playButtonDisabled]}
-                      onPress={handleStartBlocking}
-                      disabled={!hasApps}
+                      style={styles.stopCardButton}
+                      onPress={handleStopBlocking}
+                    >
+                      <IconSymbol name="stop.fill" size={20} color="#000" />
+                      <ThemedText style={styles.playButtonText}>Stop Blocking</ThemedText>
+                    </TouchableOpacity>
+                  ) : (
+                    <TouchableOpacity
+                      style={[styles.playButton, (!hasApps || state.isBlocking) && styles.playButtonDisabled]}
+                      onPress={() => handleStartBlockingSchedule(schedule)}
+                      disabled={!hasApps || state.isBlocking}
                     >
                       <IconSymbol name="play.fill" size={20} color="#000" />
-                      <ThemedText style={styles.playButtonText}>Start Blocking</ThemedText>
+                      <ThemedText style={styles.playButtonText}>
+                        {isScheduleActive ? 'Start Now' : 'Start Blocking'}
+                      </ThemedText>
                     </TouchableOpacity>
                   )}
                 </View>
@@ -272,29 +298,8 @@ const styles = StyleSheet.create({
     padding: 20,
     paddingTop: 10,
   },
-  controls: {
-    gap: 12,
-    marginVertical: 30,
-  },
-  button: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 16,
-    paddingHorizontal: 24,
-    borderRadius: 12,
-    gap: 8,
-  },
-  stopButton: {
-    backgroundColor: '#FF3B30',
-  },
-  buttonText: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#000',
-  },
   section: {
-    marginTop: 30,
+    marginTop: 10,
   },
   sectionHeader: {
     flexDirection: 'row',
@@ -317,6 +322,14 @@ const styles = StyleSheet.create({
     borderColor: '#333333',
     overflow: 'hidden',
   },
+  scheduleCardActive: {
+    borderColor: Colors.dark.primary,
+    borderWidth: 2,
+  },
+  scheduleCardScheduled: {
+    borderColor: '#FFB800',
+    borderWidth: 1,
+  },
   scheduleItem: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -326,26 +339,39 @@ const styles = StyleSheet.create({
   scheduleItemContent: {
     flex: 1,
   },
-  scheduleName: {
-    fontSize: 16,
-    fontWeight: '600',
+  scheduleHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
     marginBottom: 4,
   },
   scheduleTime: {
-    fontSize: 14,
-    opacity: 0.7,
-    marginBottom: 2,
+    fontSize: 18,
+    fontWeight: '600',
+  },
+  statusBadge: {
+    backgroundColor: Colors.dark.primary,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 4,
+  },
+  statusBadgeScheduled: {
+    backgroundColor: '#FFB800',
+  },
+  statusBadgeText: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: '#000',
+  },
+  statusBadgeTextScheduled: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: '#000',
   },
   scheduleDays: {
     fontSize: 12,
     opacity: 0.6,
     marginTop: 4,
-  },
-  scheduleApps: {
-    fontSize: 12,
-    opacity: 0.6,
-    marginTop: 2,
-    color: Colors.dark.primary,
   },
   scheduleAppsWarning: {
     fontSize: 12,
@@ -377,5 +403,15 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     color: '#000',
+  },
+  stopCardButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#FF3B30',
+    paddingVertical: 12,
+    gap: 8,
+    borderTopWidth: 1,
+    borderTopColor: '#333333',
   },
 });

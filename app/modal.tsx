@@ -15,12 +15,7 @@ export default function ModalScreen() {
     if (scheduleId && schedules.find((s) => s.id === scheduleId)) {
       await updateSchedule(scheduleId, schedule);
     } else {
-      // Only allow one schedule - if one exists, update it instead of adding new
-      if (schedules.length > 0) {
-        await updateSchedule(schedules[0].id, schedule);
-      } else {
-        await addSchedule(schedule);
-      }
+      await addSchedule(schedule);
     }
     router.back();
   };

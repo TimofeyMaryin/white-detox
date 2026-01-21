@@ -58,8 +58,9 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   icon: {
-    width: 32,
-    height: 32,
+    width: 36,
+    height: 36,
+    borderRadius: 8,
   },
   title: {
     fontSize: 20,

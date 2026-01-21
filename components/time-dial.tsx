@@ -1,7 +1,8 @@
 /**
- * Time Dial Component
+ * Time Display Component
  *
- * Displays an analog clock-style dial showing saved time.
+ * Displays saved time in "In Time" movie style: DD:HH:mm:ss
+ * Minimalist digital display with glowing green text.
  *
  * @module components/time-dial
  */
@@ -11,7 +12,7 @@ import { View, StyleSheet, Dimensions } from 'react-native';
 
 import { ThemedText } from './themed-text';
 import { Colors } from '@/constants/theme';
-import { formatTime } from '@/utils/timeFormatter';
+import { formatTimeInTimeStyle } from '@/utils/timeFormatter';
 
 interface TimeDialProps {
   /** Saved time in seconds */
@@ -19,87 +20,43 @@ interface TimeDialProps {
 }
 
 const { width } = Dimensions.get('window');
-const DIAL_SIZE = width * 0.7;
-const CENTER_SIZE = DIAL_SIZE * 0.6;
+const FONT_SIZE = width > 400 ? 42 : width > 360 ? 36 : 32;
 
 export function TimeDial({ savedTime }: TimeDialProps) {
-  const hours = Math.floor(savedTime / 3600);
-  const minutes = Math.floor((savedTime % 3600) / 60);
-  const seconds = savedTime % 60;
-
-  // Calculate angle for hour hand (0-360 degrees)
-  const hourAngle = (hours % 12) * 30 + minutes * 0.5;
-  // Calculate angle for minute hand
-  const minuteAngle = minutes * 6 + seconds * 0.1;
-  // Calculate angle for second hand
-  const secondAngle = seconds * 6;
+  const time = formatTimeInTimeStyle(savedTime);
 
   return (
     <View style={styles.container}>
-      <View style={styles.dial}>
-        {/* Hour markers */}
-        {Array.from({ length: 12 }).map((_, i) => {
-          const angle = (i * 30 - 90) * (Math.PI / 180);
-          const radius = DIAL_SIZE / 2 - 20;
-          const x = DIAL_SIZE / 2 + radius * Math.cos(angle);
-          const y = DIAL_SIZE / 2 + radius * Math.sin(angle);
-          
-          return (
-            <View
-              key={i}
-              style={[
-                styles.hourMarker,
-                {
-                  left: x - 2,
-                  top: y - 2,
-                },
-              ]}
-            />
-          );
-        })}
+      <ThemedText style={styles.savedLabel}>TIME SAVED</ThemedText>
+      <View style={styles.timeContainer}>
+        {/* Days */}
+        <View style={styles.timeUnit}>
+          <ThemedText style={styles.timeValue}>{time.days}</ThemedText>
+          <ThemedText style={styles.timeLabel}>DAYS</ThemedText>
+        </View>
 
-        {/* Hour hand */}
-        <View
-          style={[
-            styles.hand,
-            styles.hourHand,
-            {
-              transform: [{ rotate: `${hourAngle}deg` }],
-            },
-          ]}
-        />
+        <ThemedText style={styles.separator}>:</ThemedText>
 
-        {/* Minute hand */}
-        <View
-          style={[
-            styles.hand,
-            styles.minuteHand,
-            {
-              transform: [{ rotate: `${minuteAngle}deg` }],
-            },
-          ]}
-        />
+        {/* Hours */}
+        <View style={styles.timeUnit}>
+          <ThemedText style={styles.timeValue}>{time.hours}</ThemedText>
+          <ThemedText style={styles.timeLabel}>HRS</ThemedText>
+        </View>
 
-        {/* Second hand */}
-        <View
-          style={[
-            styles.hand,
-            styles.secondHand,
-            {
-              transform: [{ rotate: `${secondAngle}deg` }],
-            },
-          ]}
-        />
+        <ThemedText style={styles.separator}>:</ThemedText>
 
-        {/* Center circle */}
-        <View style={styles.center} />
+        {/* Minutes */}
+        <View style={styles.timeUnit}>
+          <ThemedText style={styles.timeValue}>{time.minutes}</ThemedText>
+          <ThemedText style={styles.timeLabel}>MIN</ThemedText>
+        </View>
 
-        {/* Time display in center */}
-        <View style={styles.timeDisplay}>
-          <ThemedText type="title" style={styles.timeText}>
-            {formatTime(savedTime)}
-          </ThemedText>
-          <ThemedText style={styles.labelText}>Saved</ThemedText>
+        <ThemedText style={styles.separator}>:</ThemedText>
+
+        {/* Seconds */}
+        <View style={styles.timeUnit}>
+          <ThemedText style={styles.timeValue}>{time.seconds}</ThemedText>
+          <ThemedText style={styles.timeLabel}>SEC</ThemedText>
         </View>
       </View>
     </View>
@@ -110,81 +67,57 @@ const styles = StyleSheet.create({
   container: {
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 40,
+    paddingVertical: 30,
+    paddingTop: 40,
   },
-  dial: {
-    width: DIAL_SIZE,
-    height: DIAL_SIZE,
-    borderRadius: DIAL_SIZE / 2,
-    borderWidth: 3,
-    borderColor: Colors.dark.primary,
-    backgroundColor: 'transparent',
-    position: 'relative',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  hourMarker: {
-    position: 'absolute',
-    width: 4,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: Colors.dark.primary,
-  },
-  hand: {
-    position: 'absolute',
-    backgroundColor: Colors.dark.primary,
-    transformOrigin: 'bottom center',
-  },
-  hourHand: {
-    width: 4,
-    height: DIAL_SIZE * 0.25,
-    bottom: DIAL_SIZE / 2,
-    left: DIAL_SIZE / 2 - 2,
-    borderRadius: 2,
-  },
-  minuteHand: {
-    width: 3,
-    height: DIAL_SIZE * 0.35,
-    bottom: DIAL_SIZE / 2,
-    left: DIAL_SIZE / 2 - 1.5,
-    borderRadius: 1.5,
-  },
-  secondHand: {
-    width: 2,
-    height: DIAL_SIZE * 0.4,
-    bottom: DIAL_SIZE / 2,
-    left: DIAL_SIZE / 2 - 1,
-    borderRadius: 1,
-    backgroundColor: Colors.dark.primary,
-    opacity: 0.7,
-  },
-  center: {
-    position: 'absolute',
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-    backgroundColor: Colors.dark.primary,
-    top: DIAL_SIZE / 2 - 6,
-    left: DIAL_SIZE / 2 - 6,
-  },
-  timeDisplay: {
-    position: 'absolute',
-    alignItems: 'center',
-    justifyContent: 'center',
-    width: CENTER_SIZE,
-    height: CENTER_SIZE,
-  },
-  timeText: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: Colors.dark.primary,
-    textAlign: 'center',
-  },
-  labelText: {
+  savedLabel: {
     fontSize: 12,
+    fontWeight: '600',
+    color: Colors.dark.primary,
+    opacity: 0.8,
+    marginBottom: 20,
+    letterSpacing: 3,
+  },
+  timeContainer: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'center',
+    paddingTop: 10,
+  },
+  timeUnit: {
+    alignItems: 'center',
+    minWidth: width > 400 ? 50 : 44,
+  },
+  timeValue: {
+    fontSize: FONT_SIZE,
+    fontWeight: '300',
+    fontVariant: ['tabular-nums'],
+    color: Colors.dark.primary,
+    textShadowColor: Colors.dark.primary,
+    textShadowOffset: { width: 0, height: 0 },
+    textShadowRadius: 8,
+    letterSpacing: 1,
+    includeFontPadding: false,
+    lineHeight: FONT_SIZE + 10,
+  },
+  timeLabel: {
+    fontSize: 9,
+    fontWeight: '600',
     color: Colors.dark.text,
-    opacity: 0.7,
-    marginTop: 4,
+    opacity: 0.5,
+    marginTop: 8,
+    letterSpacing: 1,
+  },
+  separator: {
+    fontSize: FONT_SIZE,
+    fontWeight: '300',
+    color: Colors.dark.primary,
+    opacity: 0.6,
+    marginHorizontal: 2,
+    textShadowColor: Colors.dark.primary,
+    textShadowOffset: { width: 0, height: 0 },
+    textShadowRadius: 8,
+    includeFontPadding: false,
+    lineHeight: FONT_SIZE + 10,
   },
 });
-

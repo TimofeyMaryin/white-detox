@@ -14,6 +14,8 @@ PODS:
     - AdaptyUIBuilder (= 3.15.3)
   - AdaptyUIBuilder (3.15.3):
     - AdaptyLogger (= 3.15.3)
+  - AppIconsModule (1.0.0):
+    - ExpoModulesCore
   - AppsFlyerFramework (6.17.8):
     - AppsFlyerFramework/Main (= 6.17.8)
   - AppsFlyerFramework/Main (6.17.8)
@@ -2234,6 +2236,7 @@ PODS:
   - Yoga (0.0.0)
 
 DEPENDENCIES:
+  - AppIconsModule (from `../modules/app-icons/ios`)
   - EXApplication (from `../node_modules/expo-application/ios`)
   - EXConstants (from `../node_modules/expo-constants/ios`)
   - EXNotifications (from `../node_modules/expo-notifications/ios`)
@@ -2361,6 +2364,8 @@ SPEC REPOS:
     - SDWebImageWebPCoder
 
 EXTERNAL SOURCES:
+  AppIconsModule:
+    :path: "../modules/app-icons/ios"
   EXApplication:
     :path: "../node_modules/expo-application/ios"
   EXConstants:
@@ -2567,6 +2572,7 @@ SPEC CHECKSUMS:
   AdaptyPlugin: d832e606563b2cc3e77dbc4ca23e64725a3b21c5
   AdaptyUI: 7b8515dade06d8a046826f024940c009bedb5f00
   AdaptyUIBuilder: e94ea218d936f58f13123fda19f3c13fba5cdb7d
+  AppIconsModule: 58ea44108851cb847509a2af559a072e89161b3e
   AppsFlyerFramework: 63577b60d6b9fcdab60135289979e7d1c9ec79b9
   EXApplication: 1e98d4b1dccdf30627f92917f4b2c5a53c330e5f
   EXConstants: fce59a631a06c4151602843667f7cfe35f81e271

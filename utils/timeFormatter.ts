@@ -27,6 +27,36 @@ export function formatTime(seconds: number): string {
 }
 
 /**
+ * Format seconds into DD:HH:mm:ss string (In Time movie style)
+ *
+ * @param seconds - Total seconds to format
+ * @returns Object with days, hours, minutes, seconds as strings
+ *
+ * @example
+ * ```ts
+ * formatTimeInTimeStyle(90061); // { days: "01", hours: "01", minutes: "01", seconds: "01" }
+ * ```
+ */
+export function formatTimeInTimeStyle(seconds: number): {
+  days: string;
+  hours: string;
+  minutes: string;
+  seconds: string;
+} {
+  const days = Math.floor(seconds / 86400);
+  const hours = Math.floor((seconds % 86400) / 3600);
+  const minutes = Math.floor((seconds % 3600) / 60);
+  const secs = seconds % 60;
+
+  return {
+    days: days.toString().padStart(2, '0'),
+    hours: hours.toString().padStart(2, '0'),
+    minutes: minutes.toString().padStart(2, '0'),
+    seconds: secs.toString().padStart(2, '0'),
+  };
+}
+
+/**
  * Format seconds into short human-readable string
  *
  * @param seconds - Total seconds to format
